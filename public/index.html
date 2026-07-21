@@ -4,28 +4,45 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>bind.fail — can you design a protein drug?</title>
-  <meta name="description" content="A benchmark arena for AI protein binder design. Submit designed sequences, score against AF2-Multimer ipTM, compete on the leaderboard." />
-  <meta name="theme-color" content="#1f5a3d" />
+  <meta name="description" content="A benchmark arena for AI protein binder design. Submit sequences, score against AF2-Multimer ipTM, compete on the leaderboard." />
+  <meta name="theme-color" content="#28694B" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700;800&family=Geist+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap');
-
+    /* ── Design tokens (light theme, matching ecdsa.fail) ── */
     :root {
-      --bg:          #0d1117;
-      --surface:     #161b22;
-      --surface2:    #21262d;
-      --border:      #30363d;
-      --primary:     #1f5a3d;
-      --primary-fg:  #e8f5ec;
-      --primary-dim: rgba(31,90,61,0.08);
-      --accent:      #3fb950;
-      --accent-dim:  #238636;
-      --text:        #e6edf3;
-      --text-muted:  #8b949e;
-      --text-dim:    #6e7681;
-      --tag-hard:    #da3633;
-      --tag-med:     #d29922;
-      --mono: "JetBrains Mono", ui-monospace, "Cascadia Code", monospace;
-      --sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      --bg:              #ece8d9;        /* warm cream page background */
+      --bg-subtle:       #e5e1d2;
+      --surface:         #f7f5ef;        /* card background */
+      --surface2:        #ede9dc;
+      --border:          #d8d3c4;
+      --border-strong:   #c4bfb0;
+
+      --primary:         #28694B;        /* deep forest green */
+      --primary-fg:      #edf5f0;        /* text on green */
+      --primary-muted:   rgba(232,245,236,0.55);
+      --primary-glass:   rgba(255,255,255,0.07);
+      --primary-glass2:  rgba(255,255,255,0.12);
+
+      --accent:          oklch(0.75 0.185 45);   /* warm amber — ecdsa.fail accent */
+      --accent-green:    #2a7a50;
+      --accent-green-lt: #3a9a64;
+
+      --fg:              #2a2820;        /* main text */
+      --fg-muted:        #6b6558;        /* secondary text */
+      --fg-dim:          #9a9285;        /* tertiary text */
+
+      --success:         #1d7a42;
+      --warn:            #b45309;
+      --danger:          #b91c1c;
+
+      --shadow-panel: 0 1px 2px oklch(0.30 0.03 150/0.05), 0 10px 30px oklch(0.30 0.03 150/0.07);
+      --shadow-lift:  0 2px 6px oklch(0.30 0.03 150/0.07), 0 20px 50px oklch(0.30 0.03 150/0.12);
+      --ease: cubic-bezier(0.22, 1, 0.36, 1);
+
+      --sans: "Geist", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      --mono: "Geist Mono", ui-monospace, "Cascadia Code", monospace;
       --radius: 16px;
     }
 
@@ -33,23 +50,24 @@
     html { scroll-behavior: smooth; }
     body {
       background: var(--bg);
-      color: var(--text);
+      color: var(--fg);
       font-family: var(--sans);
       font-size: 15px;
       line-height: 1.6;
       -webkit-font-smoothing: antialiased;
+      min-height: 100vh;
     }
     a { color: inherit; text-decoration: none; }
 
-    /* ── Header ────────────────────────────────────── */
+    /* ── Sticky header ── */
     header {
       position: sticky;
       top: 0;
       z-index: 50;
-      background: rgba(13,17,23,0.85);
+      border-bottom: 1px solid var(--border);
+      background: rgba(236,232,217,0.88);
       backdrop-filter: blur(16px);
       -webkit-backdrop-filter: blur(16px);
-      border-bottom: 1px solid var(--border);
       padding: 0 20px;
     }
     .header-inner {
@@ -57,396 +75,356 @@
       margin: 0 auto;
       display: flex;
       align-items: center;
-      height: 56px;
-      gap: 16px;
+      height: 52px;
+      gap: 10px;
     }
     .logo {
       font-family: var(--sans);
-      font-size: 1rem;
+      font-size: 0.97rem;
       font-weight: 800;
       letter-spacing: -0.04em;
-      color: var(--text);
+      color: var(--fg);
       flex-shrink: 0;
       cursor: pointer;
     }
-    .logo span { color: var(--accent); }
-    .header-right {
-      margin-left: auto;
-      display: flex;
+    .logo .dot { color: var(--accent); display: inline-block; }
+    .header-nav { display: flex; gap: 2px; margin-left: 4px; }
+    .nav-link {
+      font-size: 0.8rem;
+      font-weight: 500;
+      color: var(--fg-muted);
+      padding: 5px 10px;
+      border-radius: 8px;
+      transition: background 120ms var(--ease), color 120ms var(--ease);
+    }
+    .nav-link:hover { background: var(--surface2); color: var(--fg); }
+    .header-right { margin-left: auto; display: flex; align-items: center; gap: 6px; }
+    .gh-link {
+      display: inline-flex;
       align-items: center;
-      gap: 8px;
-    }
-    .btn-ghost {
-      padding: 6px 14px;
-      font-size: 0.82rem;
-      font-weight: 600;
-      color: var(--text-muted);
-      background: transparent;
-      border: none;
+      justify-content: center;
+      width: 32px; height: 32px;
       border-radius: 8px;
-      cursor: pointer;
-      transition: background 120ms, color 120ms;
+      color: var(--fg-muted);
+      transition: background 120ms var(--ease), color 120ms var(--ease);
     }
-    .btn-ghost:hover { background: var(--surface2); color: var(--text); }
-    .btn-primary-sm {
-      padding: 6px 14px;
-      font-size: 0.82rem;
-      font-weight: 600;
-      color: #fff;
-      background: var(--accent-dim);
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-      transition: background 120ms;
-    }
-    .btn-primary-sm:hover { background: var(--accent); }
+    .gh-link:hover { background: var(--surface2); color: var(--fg); }
     #auth-btn {
       padding: 6px 14px;
-      font-size: 0.82rem;
+      font-size: 0.8rem;
       font-weight: 600;
+      font-family: var(--sans);
       border-radius: 8px;
-      border: 1px solid var(--border);
+      border: 1px solid var(--border-strong);
       background: var(--surface);
-      color: var(--text);
+      color: var(--fg);
       cursor: pointer;
-      transition: background 120ms;
+      transition: background 120ms var(--ease);
       white-space: nowrap;
+      box-shadow: var(--shadow-panel);
     }
     #auth-btn:hover { background: var(--surface2); }
 
-    /* ── Layout ────────────────────────────────────── */
-    .page { max-width: 1152px; margin: 0 auto; padding: 24px 20px 80px; }
-    section { margin-bottom: 20px; }
+    /* ── Page layout ── */
+    .page { max-width: 1152px; margin: 0 auto; padding: 20px 20px 80px; }
+    section + section { margin-top: 16px; }
 
-    /* ── Hero card ─────────────────────────────────── */
+    /* ── Hero card ── */
     .hero-card {
       background: var(--primary);
       border-radius: var(--radius);
       padding: 36px 40px 32px;
       position: relative;
       overflow: hidden;
-      box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+      box-shadow: var(--shadow-lift);
     }
     .hero-strands {
       pointer-events: none;
       position: absolute;
-      right: 0;
-      top: 0;
-      height: 110%;
-      width: 55%;
-      transform: translateY(-5%);
-      opacity: 1;
+      right: 0; top: 0;
+      height: 115%;
+      width: 54%;
+      transform: translateY(-7%);
     }
     .hero-content { position: relative; z-index: 2; }
+
     .hero-top {
       display: grid;
       grid-template-columns: 1fr auto;
+      gap: 16px;
       align-items: start;
-      gap: 12px;
       margin-bottom: 28px;
     }
     .hero-kicker {
       font-family: var(--mono);
-      font-size: 0.65rem;
-      letter-spacing: 0.18em;
+      font-size: 0.63rem;
+      letter-spacing: 0.2em;
       text-transform: uppercase;
-      color: rgba(232,245,236,0.55);
+      color: var(--primary-muted);
       margin-bottom: 12px;
     }
-    .hero-headline {
-      font-size: clamp(1.6rem, 3.5vw, 2.4rem);
+    .hero-h1 {
+      font-size: clamp(1.55rem, 3.2vw, 2.4rem);
       font-weight: 800;
       letter-spacing: -0.04em;
-      line-height: 1.12;
+      line-height: 1.1;
       color: var(--primary-fg);
-      max-width: 520px;
+      max-width: 480px;
     }
     .hero-ctas {
       display: flex;
       flex-wrap: wrap;
       gap: 8px;
-      align-self: start;
       flex-shrink: 0;
+      align-self: start;
     }
     .btn-hero {
+      display: inline-flex;
+      align-items: center;
       padding: 7px 16px;
       font-size: 0.82rem;
       font-weight: 600;
-      background: rgba(232,245,236,0.95);
+      font-family: var(--sans);
+      background: var(--primary-fg);
       color: var(--primary);
       border: none;
       border-radius: 8px;
       cursor: pointer;
-      white-space: nowrap;
-      transition: background 120ms;
+      transition: background 120ms var(--ease), transform 150ms var(--ease);
       text-decoration: none;
-      display: inline-flex;
-      align-items: center;
+      white-space: nowrap;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.15);
     }
     .btn-hero:hover { background: #fff; }
+    .btn-hero:active { transform: scale(0.97); }
 
-    /* ── Frontier bar (inside hero) ────────────────── */
-    .frontier-wrap {
-      margin-bottom: 24px;
-    }
-    .frontier-label-row {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      margin-bottom: 8px;
-    }
-    .frontier-label {
+    /* ── Frontier bar ── */
+    .frontier-section { margin-bottom: 20px; }
+    .section-mono-label {
       font-family: var(--mono);
       font-size: 0.63rem;
       letter-spacing: 0.18em;
       text-transform: uppercase;
-      color: rgba(232,245,236,0.55);
+      color: var(--primary-muted);
+      margin-bottom: 8px;
     }
-    .progress-outer {
-      background: rgba(232,245,236,0.08);
-      border: 1px solid rgba(232,245,236,0.1);
+    .frontier-panel {
+      background: var(--primary-glass);
+      border: 1px solid var(--primary-glass2);
       border-radius: 12px;
-      padding: 10px 14px;
+      padding: 12px 16px 10px;
     }
     .progress-track {
       width: 100%;
       height: 8px;
-      background: rgba(0,0,0,0.25);
+      background: rgba(0,0,0,0.22);
       border-radius: 4px;
       position: relative;
-      overflow: visible;
     }
     .progress-fill {
       height: 100%;
       border-radius: 4px;
-      background: linear-gradient(90deg, rgba(63,185,80,0.7), #3fb950);
-      transition: width 1s cubic-bezier(0.4,0,0.2,1);
-      position: relative;
+      background: linear-gradient(90deg, rgba(42,122,80,0.8) 0%, #3fb950 100%);
+      transition: width 1.2s var(--ease);
     }
     .progress-threshold {
       position: absolute;
-      top: -6px;
-      bottom: -6px;
+      top: -5px; bottom: -5px;
+      left: 70%;
       width: 2px;
       background: #f0883e;
       border-radius: 1px;
-      left: 70%;
     }
-    .progress-meta {
+    .frontier-meta {
       display: flex;
       justify-content: space-between;
+      align-items: baseline;
       margin-top: 8px;
-      font-size: 0.78rem;
     }
-    .progress-meta .score {
+    .frontier-score {
       font-family: var(--mono);
       font-weight: 700;
+      font-size: 0.9rem;
       color: var(--primary-fg);
-      font-size: 0.88rem;
     }
-    .progress-meta .detail {
-      color: rgba(232,245,236,0.5);
+    .frontier-detail {
       font-size: 0.75rem;
+      color: var(--primary-muted);
     }
-    .threshold-label {
+    .threshold-note {
       font-family: var(--mono);
-      font-size: 0.62rem;
+      font-size: 0.6rem;
       color: #f0883e;
-      opacity: 0.8;
-      margin-top: 4px;
+      opacity: 0.75;
       text-align: right;
+      margin-top: 4px;
     }
 
-    /* ── Score chart (inside hero) ─────────────────── */
+    /* ── Score chart ── */
     .chart-section { }
-    .chart-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 8px;
-    }
-    .chart-title {
-      font-family: var(--mono);
-      font-size: 0.63rem;
-      letter-spacing: 0.18em;
-      text-transform: uppercase;
-      color: rgba(232,245,236,0.55);
-    }
-    .chart-wrap {
-      background: rgba(232,245,236,0.05);
-      border: 1px solid rgba(232,245,236,0.1);
+    .chart-panel {
+      background: var(--primary-glass);
+      border: 1px solid var(--primary-glass2);
       border-radius: 12px;
       padding: 12px;
-      min-height: 120px;
+      min-height: 112px;
       display: flex;
       align-items: center;
       justify-content: center;
     }
     #score-chart { display: block; width: 100%; }
     #no-history {
-      font-size: 0.82rem;
-      color: rgba(232,245,236,0.35);
+      font-size: 0.8rem;
+      color: var(--primary-muted);
       text-align: center;
       padding: 20px 0;
+      font-family: var(--mono);
     }
 
-    /* ── Cards ─────────────────────────────────────── */
+    /* ── Card (below hero) ── */
     .card {
       background: var(--surface);
       border: 1px solid var(--border);
       border-radius: 12px;
-      padding: 24px;
+      padding: 20px 24px;
+      box-shadow: var(--shadow-panel);
     }
-    .card-title {
-      font-size: 0.9rem;
-      font-weight: 700;
-      color: var(--text-muted);
-      text-transform: uppercase;
-      letter-spacing: 0.06em;
+    .card-label {
       font-family: var(--mono);
-      font-size: 0.72rem;
-      margin-bottom: 16px;
-    }
-    .section-header {
-      display: flex;
-      align-items: baseline;
-      justify-content: space-between;
-      margin-bottom: 16px;
-    }
-    .section-title {
-      font-size: 1.1rem;
-      font-weight: 700;
-      letter-spacing: -0.02em;
+      font-size: 0.65rem;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--fg-dim);
+      margin-bottom: 14px;
     }
 
-    /* ── Leaderboard ───────────────────────────────── */
+    /* ── Leaderboard ── */
+    .lb-header { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 14px; }
+    .lb-count { font-size: 0.78rem; color: var(--fg-dim); }
     .lb-table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
     .lb-table th {
       text-align: left;
       font-family: var(--mono);
-      font-size: 0.7rem;
-      text-transform: uppercase;
+      font-size: 0.68rem;
       letter-spacing: 0.08em;
-      color: var(--text-dim);
-      padding: 0 12px 8px;
+      text-transform: uppercase;
+      color: var(--fg-dim);
+      padding: 0 10px 8px;
       border-bottom: 1px solid var(--border);
       font-weight: 500;
     }
     .lb-table td {
-      padding: 11px 12px;
-      border-bottom: 1px solid rgba(48,54,61,0.5);
+      padding: 10px 10px;
+      border-bottom: 1px solid var(--border);
       vertical-align: middle;
     }
     .lb-table tr:last-child td { border-bottom: none; }
-    .rank-gold { color: #f0c040; font-weight: 700; }
-    .score-val { font-family: var(--mono); font-weight: 700; font-size: 0.92rem; }
-    .score-green { color: var(--accent); }
-    .score-yellow { color: var(--tag-med); }
-    .score-gray { color: var(--text-muted); }
-    .lb-empty {
-      text-align: center;
-      color: var(--text-dim);
-      padding: 40px 0;
-      font-size: 0.9rem;
-    }
-    .lb-note { font-size: 0.78rem; color: var(--text-dim); margin-top: 10px; }
+    .rank-gold { color: #b45309; font-weight: 700; font-family: var(--mono); font-size: 0.82rem; }
+    .rank-num  { font-family: var(--mono); font-size: 0.82rem; color: var(--fg-dim); }
+    .score-val { font-family: var(--mono); font-weight: 700; font-size: 0.9rem; }
+    .sc-green  { color: var(--success); }
+    .sc-warn   { color: var(--warn); }
+    .sc-dim    { color: var(--fg-muted); }
+    .lb-empty  { text-align: center; color: var(--fg-dim); padding: 36px 0; font-size: 0.88rem; }
+    .lb-note   { font-size: 0.75rem; color: var(--fg-dim); margin-top: 10px; }
 
-    /* ── How it works ──────────────────────────────── */
-    .steps-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 14px;
-    }
+    /* ── Steps (How it works) ── */
+    .steps-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 12px; }
     .step {
       background: var(--surface2);
       border: 1px solid var(--border);
       border-radius: 10px;
-      padding: 18px;
+      padding: 16px 18px;
     }
     .step-num {
       font-family: var(--mono);
-      font-size: 1.3rem;
-      font-weight: 800;
-      color: var(--accent-dim);
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--accent-green);
       margin-bottom: 8px;
     }
-    .step h3 { font-size: 0.9rem; font-weight: 700; margin-bottom: 5px; }
-    .step p { font-size: 0.83rem; color: var(--text-muted); line-height: 1.5; }
+    .step h3 { font-size: 0.875rem; font-weight: 700; margin-bottom: 4px; color: var(--fg); }
+    .step p   { font-size: 0.82rem; color: var(--fg-muted); line-height: 1.5; }
 
-    /* ── Targets table ─────────────────────────────── */
+    /* ── Targets table ── */
     .tgt-table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
     .tgt-table th {
       text-align: left;
       font-family: var(--mono);
-      font-size: 0.7rem;
-      text-transform: uppercase;
+      font-size: 0.68rem;
       letter-spacing: 0.08em;
-      color: var(--text-dim);
+      text-transform: uppercase;
+      color: var(--fg-dim);
       padding: 0 10px 8px;
       border-bottom: 1px solid var(--border);
       font-weight: 500;
     }
     .tgt-table td {
       padding: 10px 10px;
-      border-bottom: 1px solid rgba(48,54,61,0.4);
+      border-bottom: 1px solid var(--border);
       vertical-align: middle;
     }
     .tgt-table tr:last-child td { border-bottom: none; }
-    .target-id { font-family: var(--mono); font-size: 0.8rem; color: var(--accent); }
+    .target-id { font-family: var(--mono); font-size: 0.8rem; color: var(--accent-green); font-weight: 600; }
     .tag {
       display: inline-block;
-      font-size: 0.7rem;
+      font-size: 0.68rem;
       padding: 2px 8px;
       border-radius: 20px;
       font-weight: 500;
+      font-family: var(--mono);
     }
-    .tag-hard { background: rgba(218,54,51,0.15); color: var(--tag-hard); border: 1px solid rgba(218,54,51,0.25); }
-    .tag-med  { background: rgba(210,153,34,0.12); color: var(--tag-med);  border: 1px solid rgba(210,153,34,0.2); }
-    .pdb-link { font-family: var(--mono); font-size: 0.78rem; color: var(--accent); }
+    .tag-hard { background: rgba(185,28,28,0.08); color: var(--danger); border: 1px solid rgba(185,28,28,0.2); }
+    .tag-med  { background: rgba(180,83,9,0.08);  color: var(--warn);   border: 1px solid rgba(180,83,9,0.18); }
+    .pdb-link { font-family: var(--mono); font-size: 0.78rem; color: var(--accent-green); }
     .pdb-link:hover { text-decoration: underline; }
+    .baseline-val { font-family: var(--mono); font-size: 0.82rem; color: var(--fg-muted); }
 
-    /* ── Participate ───────────────────────────────── */
+    /* ── Participate ── */
     .p-steps { display: flex; flex-direction: column; gap: 20px; }
     .p-step { display: flex; gap: 14px; align-items: flex-start; }
     .p-num {
       flex-shrink: 0;
-      width: 24px; height: 24px;
+      width: 22px; height: 22px;
       border-radius: 50%;
-      background: var(--accent-dim);
+      background: var(--accent-green);
       color: #fff;
-      font-size: 0.72rem;
+      font-size: 0.7rem;
       font-weight: 700;
       display: flex;
       align-items: center;
       justify-content: center;
-      margin-top: 3px;
+      margin-top: 2px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.15);
     }
     .p-body { flex: 1; }
-    .p-body h4 { font-size: 0.9rem; font-weight: 700; margin-bottom: 6px; }
-    .p-body p { font-size: 0.83rem; color: var(--text-muted); margin-bottom: 8px; }
+    .p-body h4 { font-size: 0.9rem; font-weight: 700; margin-bottom: 5px; }
+    .p-body p  { font-size: 0.82rem; color: var(--fg-muted); margin-bottom: 7px; }
     .terminal {
-      background: var(--bg);
-      border: 1px solid var(--border);
+      background: #1a1f14;
+      border: 1px solid rgba(255,255,255,0.06);
       border-radius: 8px;
       padding: 12px 16px;
       font-family: var(--mono);
-      font-size: 0.8rem;
+      font-size: 0.79rem;
       line-height: 1.65;
       overflow-x: auto;
+      color: #d4e8c2;
     }
-    .p { color: var(--accent); user-select: none; }
-    .cmd { color: var(--text); }
-    .cmt { color: var(--text-dim); }
-    .out { color: var(--text-muted); }
+    .tp { color: #5fba7d; user-select: none; }
+    .tc { color: #d4e8c2; }
+    .tcc { color: #5a7050; }
+    .to { color: #8a9e7a; }
 
-    /* ── Auth modal ────────────────────────────────── */
+    /* ── Auth modal ── */
     .modal-backdrop {
       display: none;
       position: fixed; inset: 0;
-      background: rgba(0,0,0,0.65);
+      background: rgba(20,22,16,0.55);
       z-index: 200;
       align-items: center;
       justify-content: center;
+      backdrop-filter: blur(4px);
     }
     .modal-backdrop.open { display: flex; }
     .modal {
@@ -454,108 +432,87 @@
       border: 1px solid var(--border);
       border-radius: 14px;
       padding: 28px;
-      width: min(420px, calc(100vw - 40px));
+      width: min(420px, calc(100vw - 32px));
       position: relative;
+      box-shadow: var(--shadow-lift);
     }
-    .modal-title { font-size: 1rem; font-weight: 700; margin-bottom: 20px; }
+    .modal-title { font-size: 1rem; font-weight: 700; margin-bottom: 18px; }
     .modal-close {
-      position: absolute;
-      top: 16px; right: 16px;
+      position: absolute; top: 14px; right: 14px;
       background: none; border: none;
-      color: var(--text-muted);
-      font-size: 1.1rem;
-      cursor: pointer;
-      padding: 4px 8px;
-      border-radius: 6px;
+      color: var(--fg-dim); font-size: 1rem;
+      cursor: pointer; padding: 4px 8px; border-radius: 6px;
     }
-    .modal-close:hover { background: var(--surface2); color: var(--text); }
-    .tab-row { display: flex; gap: 4px; margin-bottom: 20px; }
+    .modal-close:hover { background: var(--surface2); color: var(--fg); }
+    .tab-row { display: flex; gap: 4px; margin-bottom: 18px; }
     .tab {
-      padding: 6px 14px; font-size: 0.82rem; font-weight: 600;
-      border-radius: 8px; border: 1px solid var(--border);
-      background: none; color: var(--text-muted); cursor: pointer;
+      padding: 5px 12px; font-size: 0.8rem; font-weight: 600;
+      border-radius: 7px; border: 1px solid var(--border);
+      background: none; color: var(--fg-muted); cursor: pointer;
+      font-family: var(--sans); transition: background 100ms, color 100ms;
     }
-    .tab.active { background: var(--surface2); color: var(--text); border-color: var(--accent-dim); }
-    .form-group { margin-bottom: 14px; }
-    .form-label { display: block; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 5px; }
+    .tab.active { background: var(--surface2); color: var(--fg); border-color: var(--border-strong); }
+    .form-group { margin-bottom: 12px; }
+    .form-label { display: block; font-size: 0.78rem; color: var(--fg-muted); margin-bottom: 4px; font-weight: 500; }
     .form-input {
-      width: 100%; padding: 8px 12px;
+      width: 100%; padding: 8px 11px;
       background: var(--bg); border: 1px solid var(--border);
-      border-radius: 8px; color: var(--text); font-size: 0.88rem;
+      border-radius: 8px; color: var(--fg); font-size: 0.875rem;
       font-family: var(--sans); outline: none;
+      transition: border-color 120ms;
     }
-    .form-input:focus { border-color: var(--accent-dim); }
+    .form-input:focus { border-color: var(--accent-green); }
     .btn-submit {
       width: 100%; padding: 9px;
-      background: var(--accent-dim); color: #fff;
+      background: var(--primary); color: var(--primary-fg);
       border: none; border-radius: 8px;
-      font-size: 0.88rem; font-weight: 600;
-      cursor: pointer; transition: background 120ms;
+      font-size: 0.875rem; font-weight: 600; font-family: var(--sans);
+      cursor: pointer; transition: background 120ms var(--ease);
     }
-    .btn-submit:hover { background: var(--accent); }
-    .key-box {
-      display: none;
-      background: var(--bg);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 12px 14px;
-      margin-top: 14px;
-    }
+    .btn-submit:hover { background: var(--accent-green); }
+    .key-box { display: none; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 12px; margin-top: 12px; }
     .key-box.show { display: block; }
-    .key-label { font-size: 0.75rem; color: var(--text-dim); margin-bottom: 4px; }
-    .key-value {
-      font-family: var(--mono);
-      font-size: 0.82rem;
-      color: var(--accent);
-      word-break: break-all;
-    }
-    .key-copy {
-      margin-top: 8px;
-      font-size: 0.75rem;
-      background: none;
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      color: var(--text-muted);
-      padding: 4px 10px;
-      cursor: pointer;
-    }
-    .key-copy:hover { color: var(--text); }
-    .modal-msg { font-size: 0.82rem; color: var(--text-muted); margin-top: 10px; min-height: 18px; }
-    .modal-msg.error { color: var(--tag-hard); }
+    .key-label { font-size: 0.72rem; color: var(--fg-dim); margin-bottom: 4px; font-weight: 500; }
+    .key-val { font-family: var(--mono); font-size: 0.82rem; color: var(--accent-green); word-break: break-all; }
+    .key-copy { margin-top: 8px; font-size: 0.72rem; background: none; border: 1px solid var(--border); border-radius: 6px; color: var(--fg-muted); padding: 3px 10px; cursor: pointer; font-family: var(--sans); }
+    .key-copy:hover { color: var(--fg); }
+    .modal-msg { font-size: 0.8rem; color: var(--fg-muted); margin-top: 8px; min-height: 16px; }
+    .modal-msg.err { color: var(--danger); }
 
-    /* ── Footer ────────────────────────────────────── */
+    /* ── Footer ── */
     footer {
       border-top: 1px solid var(--border);
-      padding: 24px 20px;
+      padding: 22px 20px;
       text-align: center;
-      color: var(--text-dim);
+      color: var(--fg-dim);
       font-size: 0.8rem;
     }
-    footer a { color: var(--text-muted); }
-    footer a:hover { color: var(--text); }
+    footer a { color: var(--fg-muted); }
+    footer a:hover { color: var(--fg); }
 
-    /* ── Responsive ─────────────────────────────────── */
-    @media (max-width: 680px) {
+    /* ── Responsive ── */
+    @media (max-width: 640px) {
       .hero-card { padding: 24px 20px 20px; }
       .hero-top { grid-template-columns: 1fr; }
       .hero-ctas { display: none; }
+      .hero-strands { display: none; }
     }
   </style>
 </head>
 <body>
 
-<!-- ── HEADER ── -->
+<!-- HEADER -->
 <header>
   <div class="header-inner">
-    <span class="logo" onclick="scrollTo({top:0,behavior:'smooth'})">bind<span>.</span>fail</span>
-    <nav style="display:flex;gap:4px;margin-left:12px;">
-      <a href="#how-it-works" class="btn-ghost">How it works</a>
-      <a href="#targets" class="btn-ghost">Targets</a>
-      <a href="#participate" class="btn-ghost">Participate</a>
+    <span class="logo" onclick="scrollTo({top:0,behavior:'smooth'})">bind<span class="dot">.</span>fail</span>
+    <nav class="header-nav">
+      <a href="#how-it-works" class="nav-link">How it works</a>
+      <a href="#targets" class="nav-link">Targets</a>
+      <a href="#participate" class="nav-link">Participate</a>
     </nav>
     <div class="header-right">
-      <a href="https://github.com/chainyoda/bindfail" target="_blank" class="btn-ghost" style="padding:6px 10px;">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="display:block;opacity:0.7"><path d="M12 2C6.477 2 2 6.477 2 12c0 4.418 2.865 8.166 6.839 9.489.5.092.682-.217.682-.482 0-.237-.009-.868-.013-1.703-2.782.604-3.369-1.34-3.369-1.34-.454-1.155-1.11-1.463-1.11-1.463-.908-.62.069-.608.069-.608 1.003.07 1.531 1.03 1.531 1.03.892 1.529 2.341 1.087 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.029-2.683-.103-.253-.446-1.27.098-2.647 0 0 .84-.269 2.75 1.025A9.578 9.578 0 0 1 12 6.836a9.59 9.59 0 0 1 2.504.337c1.909-1.294 2.747-1.025 2.747-1.025.546 1.377.203 2.394.1 2.647.64.699 1.028 1.592 1.028 2.683 0 3.842-2.339 4.687-4.566 4.935.359.309.678.919.678 1.852 0 1.336-.012 2.415-.012 2.741 0 .267.18.578.688.48C19.138 20.163 22 16.418 22 12c0-5.523-4.477-10-10-10z"/></svg>
+      <a href="https://github.com/chainyoda/bindfail" target="_blank" rel="noreferrer" class="gh-link" aria-label="GitHub">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.477 2 2 6.477 2 12c0 4.418 2.865 8.166 6.839 9.489.5.092.682-.217.682-.482 0-.237-.009-.868-.013-1.703-2.782.604-3.369-1.34-3.369-1.34-.454-1.155-1.11-1.463-1.11-1.463-.908-.62.069-.608.069-.608 1.003.07 1.531 1.03 1.531 1.03.892 1.529 2.341 1.087 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.029-2.683-.103-.253-.446-1.27.098-2.647 0 0 .84-.269 2.75 1.025A9.578 9.578 0 0 1 12 6.836a9.59 9.59 0 0 1 2.504.337c1.909-1.294 2.747-1.025 2.747-1.025.546 1.377.203 2.394.1 2.647.64.699 1.028 1.592 1.028 2.683 0 3.842-2.339 4.687-4.566 4.935.359.309.678.919.678 1.852 0 1.336-.012 2.415-.012 2.741 0 .267.18.578.688.48C19.138 20.163 22 16.418 22 12c0-5.523-4.477-10-10-10z"/></svg>
       </a>
       <button id="auth-btn" onclick="openModal()">Get API key</button>
     </div>
@@ -564,28 +521,26 @@
 
 <div class="page">
 
-  <!-- ── HERO CARD ── -->
+  <!-- HERO CARD -->
   <section>
     <div class="hero-card">
-      <!-- SVG background strands -->
       <svg class="hero-strands" aria-hidden="true" viewBox="0 0 1311 2439" fill="none" preserveAspectRatio="xMidYMid slice">
         <defs>
-          <linearGradient id="gc" x1="618" y1="2079" x2="1614" y2="354" gradientUnits="userSpaceOnUse">
-            <stop offset="0" stop-color="#c8f5d8" stop-opacity="0.35"/>
-            <stop offset="1" stop-color="#c8f5d8" stop-opacity="0.12"/>
+          <linearGradient id="hg" x1="618" y1="2079" x2="1614" y2="354" gradientUnits="userSpaceOnUse">
+            <stop offset="0" stop-color="#d4f0e0" stop-opacity="0.35"/>
+            <stop offset="1" stop-color="#d4f0e0" stop-opacity="0.12"/>
           </linearGradient>
         </defs>
-        <path d="M1198,116s-73,654-134,807-203,253-300,253-184-62-249-102-193,30-194,231c-1,230,165,291,241,237s79-119,213-116c349,4,445,998,445,998" stroke="url(#gc)" stroke-width="9" stroke-linecap="round" fill="none"/>
-        <path d="M1162,0s-61,719-128,886-163,240-270,240-138-33-230-94-246,31-247,284c-1,253,191,335,274,276s74-129,221-126c338,7,351,957,351,957" stroke="url(#gc)" stroke-width="9" stroke-linecap="round" fill="none"/>
-        <path d="M1307,2438l-109-463s-172-588-434-594c-114-3-145,68-210,115s-194-8-194-204c1-196,123-207,194-159s127,91,210,91,275-129,327-259,173-849,173-849" stroke="url(#gc)" stroke-width="9" stroke-linecap="round" fill="none"/>
+        <path d="M1198,116s-73,654-134,807-203,253-300,253-184-62-249-102-193,30-194,231c-1,230,165,291,241,237s79-119,213-116c349,4,445,998,445,998" stroke="url(#hg)" stroke-width="9" stroke-linecap="round" fill="none"/>
+        <path d="M1162,0s-61,719-128,886-163,240-270,240-138-33-230-94-246,31-247,284c-1,253,191,335,274,276s74-129,221-126c338,7,351,957,351,957" stroke="url(#hg)" stroke-width="9" stroke-linecap="round" fill="none"/>
+        <path d="M1307,2438l-109-463s-172-588-434-594c-114-3-145,68-210,115s-194-8-194-204c1-196,123-207,194-159s127,91,210,91,275-129,327-259,173-849,173-849" stroke="url(#hg)" stroke-width="9" stroke-linecap="round" fill="none"/>
       </svg>
 
       <div class="hero-content">
-        <!-- Top row: headline + CTA buttons -->
         <div class="hero-top">
           <div>
             <p class="hero-kicker">Protein Binder Design Benchmark</p>
-            <h1 class="hero-headline">Can your AI design<br>a protein drug?</h1>
+            <h1 class="hero-h1">Can your AI design<br>a protein drug?</h1>
           </div>
           <div class="hero-ctas">
             <a href="#how-it-works" class="btn-hero">How it works</a>
@@ -593,55 +548,49 @@
           </div>
         </div>
 
-        <!-- Frontier progress -->
-        <div class="frontier-wrap">
-          <div class="frontier-label-row">
-            <span class="frontier-label">Frontier Progress</span>
-          </div>
-          <div class="progress-outer">
+        <!-- Frontier -->
+        <div class="frontier-section">
+          <p class="section-mono-label">Frontier Progress</p>
+          <div class="frontier-panel">
             <div class="progress-track">
               <div class="progress-fill" id="progress-fill" style="width:0%"></div>
               <div class="progress-threshold"></div>
             </div>
-            <div class="progress-meta">
-              <span class="score" id="frontier-score">—</span>
-              <span class="detail" id="frontier-detail">No submissions yet</span>
+            <div class="frontier-meta">
+              <span class="frontier-score" id="frontier-score">—</span>
+              <span class="frontier-detail" id="frontier-detail">No submissions yet</span>
             </div>
-            <div class="threshold-label">0.70 pass threshold</div>
+            <div class="threshold-note">0.70 pass threshold</div>
           </div>
         </div>
 
-        <!-- Score history chart -->
+        <!-- Chart -->
         <div class="chart-section">
-          <div class="chart-header">
-            <span class="chart-title">Score history</span>
-          </div>
-          <div class="chart-wrap">
-            <div id="no-history">No submissions yet. Be the first!</div>
-            <svg id="score-chart" style="display:none" height="120"></svg>
+          <p class="section-mono-label">Score history</p>
+          <div class="chart-panel">
+            <div id="no-history">No submissions yet — be the first!</div>
+            <svg id="score-chart" style="display:none" height="110"></svg>
           </div>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- ── LEADERBOARD ── -->
+  <!-- LEADERBOARD -->
   <section id="leaderboard-section">
     <div class="card">
-      <div class="section-header">
-        <span class="card-title">Leaderboard</span>
-        <span id="lb-count" style="font-size:0.78rem;color:var(--text-dim)"></span>
+      <div class="lb-header">
+        <span class="card-label">Leaderboard</span>
+        <span class="lb-count" id="lb-count"></span>
       </div>
-      <div id="leaderboard-content">
-        <div class="lb-empty">Loading...</div>
-      </div>
+      <div id="leaderboard-content"><div class="lb-empty">Loading...</div></div>
     </div>
   </section>
 
-  <!-- ── HOW IT WORKS ── -->
+  <!-- HOW IT WORKS -->
   <section id="how-it-works">
     <div class="card">
-      <div class="card-title" style="margin-bottom:18px;">How it works</div>
+      <p class="card-label">How it works</p>
       <div class="steps-grid">
         <div class="step">
           <div class="step-num">01</div>
@@ -656,65 +605,53 @@
         <div class="step">
           <div class="step-num">03</div>
           <h3>Submit via CLI</h3>
-          <p>Run <code style="font-family:var(--mono);font-size:0.8em;color:var(--accent)">bindfail submit</code>. The server scores each sequence with AF2-Multimer ipTM.</p>
+          <p>Run <code style="font-family:var(--mono);font-size:0.82em;color:var(--accent-green)">bindfail submit</code>. The server scores each sequence with AF2-Multimer.</p>
         </div>
         <div class="step">
           <div class="step-num">04</div>
           <h3>Score &amp; rank</h3>
-          <p>Score = mean ipTM across all 8 targets. Beat the leaderboard and get promoted. Threshold 0.70 marks a successful binder.</p>
+          <p>Score = mean ipTM across all 8 targets. 0.70 = successful binder. Beat the leaderboard to get promoted.</p>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- ── TARGETS ── -->
+  <!-- TARGETS -->
   <section id="targets">
     <div class="card">
-      <div class="card-title" style="margin-bottom:18px;">The targets</div>
-      <div style="overflow-x:auto;">
+      <p class="card-label">The targets</p>
+      <div style="overflow-x:auto">
         <table class="tgt-table">
-          <thead>
-            <tr>
-              <th>Target ID</th>
-              <th>Name</th>
-              <th>PDB</th>
-              <th>Disease area</th>
-              <th>Difficulty</th>
-              <th>BindCraft baseline</th>
-            </tr>
-          </thead>
+          <thead><tr>
+            <th>Target ID</th><th>Name</th><th>PDB</th><th>Disease area</th><th>Difficulty</th><th>BindCraft baseline</th>
+          </tr></thead>
           <tbody>
-            <tr><td><span class="target-id">spike_rbd</span></td><td>SARS-CoV-2 Spike RBD</td><td><a class="pdb-link" href="https://www.rcsb.org/structure/6M0J" target="_blank">6M0J</a></td><td>COVID-19</td><td><span class="tag tag-med">medium</span></td><td style="font-family:var(--mono);font-size:0.85rem;color:var(--text-muted)">—</td></tr>
-            <tr><td><span class="target-id">pd1</span></td><td>PD-1</td><td><a class="pdb-link" href="https://www.rcsb.org/structure/4ZQK" target="_blank">4ZQK</a></td><td>Cancer immunotherapy</td><td><span class="tag tag-med">medium</span></td><td style="font-family:var(--mono);font-size:0.85rem;color:var(--text-muted)">22%</td></tr>
-            <tr><td><span class="target-id">her2</span></td><td>HER2</td><td><a class="pdb-link" href="https://www.rcsb.org/structure/1N8Z" target="_blank">1N8Z</a></td><td>Breast cancer</td><td><span class="tag tag-med">medium</span></td><td style="font-family:var(--mono);font-size:0.85rem;color:var(--text-muted)">—</td></tr>
-            <tr><td><span class="target-id">tnf_alpha</span></td><td>TNF-α</td><td><a class="pdb-link" href="https://www.rcsb.org/structure/1TNF" target="_blank">1TNF</a></td><td>Inflammatory disease</td><td><span class="tag tag-hard">hard</span></td><td style="font-family:var(--mono);font-size:0.85rem;color:var(--text-muted)">29%</td></tr>
-            <tr><td><span class="target-id">pcsk9</span></td><td>PCSK9</td><td><a class="pdb-link" href="https://www.rcsb.org/structure/2P4E" target="_blank">2P4E</a></td><td>Cardiovascular</td><td><span class="tag tag-med">medium</span></td><td style="font-family:var(--mono);font-size:0.85rem;color:var(--text-muted)">47%</td></tr>
-            <tr><td><span class="target-id">rsv_f</span></td><td>RSV F protein</td><td><a class="pdb-link" href="https://www.rcsb.org/structure/4MMV" target="_blank">4MMV</a></td><td>Respiratory virus</td><td><span class="tag tag-med">medium</span></td><td style="font-family:var(--mono);font-size:0.85rem;color:var(--text-muted)">—</td></tr>
-            <tr><td><span class="target-id">flu_ha</span></td><td>Influenza H3 HA</td><td><a class="pdb-link" href="https://www.rcsb.org/structure/3LZG" target="_blank">3LZG</a></td><td>Influenza</td><td><span class="tag tag-med">medium</span></td><td style="font-family:var(--mono);font-size:0.85rem;color:var(--text-muted)">—</td></tr>
-            <tr><td><span class="target-id">egfr</span></td><td>EGFR</td><td><a class="pdb-link" href="https://www.rcsb.org/structure/1IVO" target="_blank">1IVO</a></td><td>Lung / colorectal cancer</td><td><span class="tag tag-med">medium</span></td><td style="font-family:var(--mono);font-size:0.85rem;color:var(--text-muted)">—</td></tr>
+            <tr><td><span class="target-id">spike_rbd</span></td><td>SARS-CoV-2 Spike RBD</td><td><a class="pdb-link" href="https://www.rcsb.org/structure/6M0J" target="_blank">6M0J</a></td><td>COVID-19</td><td><span class="tag tag-med">medium</span></td><td class="baseline-val">—</td></tr>
+            <tr><td><span class="target-id">pd1</span></td><td>PD-1</td><td><a class="pdb-link" href="https://www.rcsb.org/structure/4ZQK" target="_blank">4ZQK</a></td><td>Cancer immunotherapy</td><td><span class="tag tag-med">medium</span></td><td class="baseline-val">22%</td></tr>
+            <tr><td><span class="target-id">her2</span></td><td>HER2</td><td><a class="pdb-link" href="https://www.rcsb.org/structure/1N8Z" target="_blank">1N8Z</a></td><td>Breast cancer</td><td><span class="tag tag-med">medium</span></td><td class="baseline-val">—</td></tr>
+            <tr><td><span class="target-id">tnf_alpha</span></td><td>TNF-&alpha;</td><td><a class="pdb-link" href="https://www.rcsb.org/structure/1TNF" target="_blank">1TNF</a></td><td>Inflammatory disease</td><td><span class="tag tag-hard">hard</span></td><td class="baseline-val">29%</td></tr>
+            <tr><td><span class="target-id">pcsk9</span></td><td>PCSK9</td><td><a class="pdb-link" href="https://www.rcsb.org/structure/2P4E" target="_blank">2P4E</a></td><td>Cardiovascular</td><td><span class="tag tag-med">medium</span></td><td class="baseline-val">47%</td></tr>
+            <tr><td><span class="target-id">rsv_f</span></td><td>RSV F protein</td><td><a class="pdb-link" href="https://www.rcsb.org/structure/4MMV" target="_blank">4MMV</a></td><td>Respiratory virus</td><td><span class="tag tag-med">medium</span></td><td class="baseline-val">—</td></tr>
+            <tr><td><span class="target-id">flu_ha</span></td><td>Influenza H3 HA</td><td><a class="pdb-link" href="https://www.rcsb.org/structure/3LZG" target="_blank">3LZG</a></td><td>Influenza</td><td><span class="tag tag-med">medium</span></td><td class="baseline-val">—</td></tr>
+            <tr><td><span class="target-id">egfr</span></td><td>EGFR</td><td><a class="pdb-link" href="https://www.rcsb.org/structure/1IVO" target="_blank">1IVO</a></td><td>Lung / colorectal cancer</td><td><span class="tag tag-med">medium</span></td><td class="baseline-val">—</td></tr>
           </tbody>
         </table>
       </div>
-      <p style="margin-top:12px;font-size:0.78rem;color:var(--text-dim)">
-        BindCraft baselines from <a href="https://www.biorxiv.org/content/10.1101/2024.09.30.615802" target="_blank" style="color:var(--text-muted)">Pacesa et al. 2024</a>.
-        Score = mean ipTM across all 8 targets.
-      </p>
+      <p style="margin-top:10px;font-size:0.75rem;color:var(--fg-dim)">BindCraft baselines from <a href="https://www.biorxiv.org/content/10.1101/2024.09.30.615802" target="_blank" style="color:var(--fg-muted)">Pacesa et al. 2024</a>. Score = mean ipTM across all 8 targets.</p>
     </div>
   </section>
 
-  <!-- ── PARTICIPATE ── -->
+  <!-- PARTICIPATE -->
   <section id="participate">
     <div class="card">
-      <div class="card-title" style="margin-bottom:20px;">Participate</div>
+      <p class="card-label">Participate</p>
       <div class="p-steps">
 
         <div class="p-step">
           <div class="p-num">1</div>
           <div class="p-body">
             <h4>Install the CLI</h4>
-            <div class="terminal">
-              <span class="p">$ </span><span class="cmd">pip install bindfail</span>
-            </div>
+            <div class="terminal"><span class="tp">$ </span><span class="tc">pip install bindfail</span></div>
           </div>
         </div>
 
@@ -722,13 +659,13 @@
           <div class="p-num">2</div>
           <div class="p-body">
             <h4>Get an API key</h4>
-            <p>Click <strong>Get API key</strong> in the top-right, or register from the CLI.</p>
+            <p>Click <strong>Get API key</strong> in the header, or run <code style="font-family:var(--mono);font-size:0.82em">bindfail login</code> from the CLI.</p>
             <div class="terminal">
-              <div><span class="p">$ </span><span class="cmd">bindfail login</span></div>
-              <div><span class="out">Server: https://bindfail.vercel.app</span></div>
-              <div><span class="out">Register or log in? [register/login]: register</span></div>
-              <div><span class="out">Your name / team: my-team</span></div>
-              <div><span class="out">API key: bf_a1b2c3d4...</span></div>
+              <div><span class="tp">$ </span><span class="tc">bindfail login</span></div>
+              <div><span class="to">Server: https://bindfail.vercel.app</span></div>
+              <div><span class="to">Register or log in? [register/login]: register</span></div>
+              <div><span class="to">Your name / team: my-team</span></div>
+              <div><span class="to">API key: bf_a1b2c3d4...</span></div>
             </div>
           </div>
         </div>
@@ -736,19 +673,19 @@
         <div class="p-step">
           <div class="p-num">3</div>
           <div class="p-body">
-            <h4>Design binders and submit</h4>
-            <p>Create a FASTA file with one sequence per target ID, then submit.</p>
+            <h4>Submit your designs</h4>
+            <p>One FASTA entry per target ID. Missing targets score 0 ipTM.</p>
             <div class="terminal">
-              <div><span class="cmt"># sequences.fasta — one entry per target ID</span></div>
-              <div><span class="cmd">&gt;spike_rbd</span></div>
-              <div><span class="cmd">MKTAYIAKQRQISFVKSHFSRQLEERLGLIEVQAPLAPGMIREDYLDAEYEVK</span></div>
-              <div><span class="cmd">&gt;pd1</span></div>
-              <div><span class="cmd">ACDEFGHIKLMNPQRSTVWYACDEFGHIKLMNPQRSTVWYACDEFGHIKLMN</span></div>
-              <div style="margin-top:8px"><span class="p">$ </span><span class="cmd">bindfail submit sequences.fasta --note "RFdiffusion v1" --model "RFdiffusion"</span></div>
-              <div style="margin-top:4px"><span class="out">Score: 0.4821  (not promoted)</span></div>
-              <div><span class="out">  spike_rbd   0.5312   no</span></div>
-              <div><span class="out">  pd1         0.7201   YES</span></div>
-              <div><span class="out">  ...</span></div>
+              <div><span class="tcc"># sequences.fasta</span></div>
+              <div><span class="tc">&gt;spike_rbd</span></div>
+              <div><span class="tc">MKTAYIAKQRQISFVKSHFSRQLEERLGLIEVQAPLAPGMIREDYLDAEYEVK</span></div>
+              <div><span class="tc">&gt;pd1</span></div>
+              <div><span class="tc">ACDEFGHIKLMNPQRSTVWYACDEFGHIKLMNPQRSTVWYACDEFGHIKLMN</span></div>
+              <div style="margin-top:6px"><span class="tcc"># ...one entry per target</span></div>
+              <div style="margin-top:6px"><span class="tp">$ </span><span class="tc">bindfail submit sequences.fasta --note "RFdiffusion v1"</span></div>
+              <div><span class="to">Score: 0.4821  (not promoted)</span></div>
+              <div><span class="to">  spike_rbd   0.5312   no</span></div>
+              <div><span class="to">  pd1         0.7201   YES</span></div>
             </div>
           </div>
         </div>
@@ -760,144 +697,117 @@
 </div>
 
 <footer>
-  <p>bind.fail &nbsp;&middot;&nbsp;
-    <a href="https://github.com/chainyoda/bindfail">GitHub</a> &nbsp;&middot;&nbsp;
-    Scoring by AF2-Multimer &nbsp;&middot;&nbsp;
-    Inspired by <a href="https://ecdsa.fail">ecdsa.fail</a>
-  </p>
+  bind.fail &nbsp;&middot;&nbsp;
+  <a href="https://github.com/chainyoda/bindfail">GitHub</a> &nbsp;&middot;&nbsp;
+  Scoring by AF2-Multimer &nbsp;&middot;&nbsp;
+  Inspired by <a href="https://ecdsa.fail">ecdsa.fail</a>
 </footer>
 
-<!-- ── AUTH MODAL ── -->
-<div class="modal-backdrop" id="modal-backdrop" onclick="closeModalOutside(event)">
+<!-- AUTH MODAL -->
+<div class="modal-backdrop" id="modal-backdrop" onclick="closeOutside(event)">
   <div class="modal">
-    <div class="modal-title" id="modal-title">Get API key</div>
+    <div class="modal-title">Get API key</div>
     <button class="modal-close" onclick="closeModal()">&times;</button>
     <div class="tab-row">
-      <button class="tab active" id="tab-register" onclick="switchTab('register')">Register</button>
-      <button class="tab" id="tab-signin" onclick="switchTab('signin')">Sign in</button>
+      <button class="tab active" id="tab-r" onclick="switchTab('r')">Register</button>
+      <button class="tab" id="tab-s" onclick="switchTab('s')">Sign in</button>
     </div>
 
-    <div id="pane-register">
+    <div id="pane-r">
       <div class="form-group">
-        <label class="form-label" for="reg-name">Your name or team name</label>
-        <input class="form-input" id="reg-name" type="text" placeholder="e.g. protein-lab" autocomplete="off" />
+        <label class="form-label" for="r-name">Name or team</label>
+        <input class="form-input" id="r-name" type="text" placeholder="e.g. protein-lab" autocomplete="off" />
       </div>
-      <button class="btn-submit" onclick="doRegister()">Register &amp; get key</button>
-      <div class="key-box" id="reg-key-box">
-        <div class="key-label">Your API key (save this now)</div>
-        <div class="key-value" id="reg-key-val"></div>
+      <button class="btn-submit" onclick="doRegister()">Register and get key</button>
+      <div class="key-box" id="key-box">
+        <div class="key-label">Your API key (save this — shown once)</div>
+        <div class="key-val" id="key-val"></div>
         <button class="key-copy" onclick="copyKey()">Copy</button>
       </div>
-      <div class="modal-msg" id="reg-msg"></div>
+      <p class="modal-msg" id="r-msg"></p>
     </div>
 
-    <div id="pane-signin" style="display:none">
+    <div id="pane-s" style="display:none">
       <div class="form-group">
-        <label class="form-label" for="si-key">API key</label>
-        <input class="form-input" id="si-key" type="text" placeholder="bf_..." autocomplete="off" />
+        <label class="form-label" for="s-key">API key</label>
+        <input class="form-input" id="s-key" type="text" placeholder="bf_..." autocomplete="off" />
       </div>
       <button class="btn-submit" onclick="doSignIn()">Sign in</button>
-      <div class="modal-msg" id="si-msg"></div>
+      <p class="modal-msg" id="s-msg"></p>
     </div>
   </div>
 </div>
 
 <script>
-// ── Auth state ────────────────────────────────────────────────────────────
 const API = '';
 
-function getSession() {
-  try { return JSON.parse(localStorage.getItem('bindfail_session') || 'null'); } catch { return null; }
-}
-function setSession(s) { localStorage.setItem('bindfail_session', JSON.stringify(s)); }
-function clearSession() { localStorage.removeItem('bindfail_session'); }
+// ── Session ──────────────────────────────────────────────────────────────
+const getSession = () => { try { return JSON.parse(localStorage.getItem('bf_session') || 'null'); } catch { return null; } };
+const setSession = s => localStorage.setItem('bf_session', JSON.stringify(s));
+const clearSession = () => localStorage.removeItem('bf_session');
 
 function updateAuthBtn() {
   const s = getSession();
-  const btn = document.getElementById('auth-btn');
-  if (s) {
-    btn.textContent = s.name;
-    btn.onclick = signOut;
-  } else {
-    btn.textContent = 'Get API key';
-    btn.onclick = openModal;
-  }
+  const b = document.getElementById('auth-btn');
+  b.textContent = s ? s.name : 'Get API key';
+  b.onclick = s ? signOut : openModal;
 }
+function signOut() { clearSession(); updateAuthBtn(); }
 
-function openModal() {
-  document.getElementById('modal-backdrop').classList.add('open');
-  document.getElementById('reg-name').focus();
+// ── Modal ────────────────────────────────────────────────────────────────
+function openModal() { document.getElementById('modal-backdrop').classList.add('open'); setTimeout(() => document.getElementById('r-name').focus(), 50); }
+function closeModal() { document.getElementById('modal-backdrop').classList.remove('open'); }
+function closeOutside(e) { if (e.target === document.getElementById('modal-backdrop')) closeModal(); }
+function switchTab(t) {
+  ['r','s'].forEach(id => {
+    document.getElementById(`pane-${id}`).style.display = id === t ? '' : 'none';
+    document.getElementById(`tab-${id}`).classList.toggle('active', id === t);
+  });
 }
-function closeModal() {
-  document.getElementById('modal-backdrop').classList.remove('open');
+function msg(id, text, err) {
+  const el = document.getElementById(id);
+  el.textContent = text;
+  el.className = 'modal-msg' + (err ? ' err' : '');
 }
-function closeModalOutside(e) {
-  if (e.target === document.getElementById('modal-backdrop')) closeModal();
-}
-function switchTab(tab) {
-  document.getElementById('pane-register').style.display = tab === 'register' ? '' : 'none';
-  document.getElementById('pane-signin').style.display   = tab === 'signin'   ? '' : 'none';
-  document.getElementById('tab-register').classList.toggle('active', tab === 'register');
-  document.getElementById('tab-signin').classList.toggle('active', tab === 'signin');
-}
-
 async function doRegister() {
-  const name = document.getElementById('reg-name').value.trim();
-  if (!name) { setMsg('reg', 'Enter a name.', true); return; }
-  setMsg('reg', 'Registering...');
+  const name = document.getElementById('r-name').value.trim();
+  if (!name) { msg('r-msg', 'Enter a name.', true); return; }
+  msg('r-msg', 'Registering...');
   try {
     const r = await fetch(`${API}/api/register?name=${encodeURIComponent(name)}`);
     const d = await r.json();
-    if (!r.ok) { setMsg('reg', d.error || 'Error', true); return; }
-    document.getElementById('reg-key-val').textContent = d.api_key;
-    document.getElementById('reg-key-box').classList.add('show');
+    if (!r.ok) { msg('r-msg', d.error || 'Error', true); return; }
+    document.getElementById('key-val').textContent = d.api_key;
+    document.getElementById('key-box').classList.add('show');
     setSession({ name: d.name, api_key: d.api_key });
     updateAuthBtn();
-    setMsg('reg', `Registered as ${d.name}. Key saved.`);
-  } catch (e) { setMsg('reg', 'Network error', true); }
+    msg('r-msg', `Registered as ${d.name}.`);
+  } catch { msg('r-msg', 'Network error', true); }
 }
-
 async function doSignIn() {
-  const key = document.getElementById('si-key').value.trim();
-  if (!key) { setMsg('si', 'Enter your API key.', true); return; }
-  setMsg('si', 'Signing in...');
+  const key = document.getElementById('s-key').value.trim();
+  if (!key) { msg('s-msg', 'Enter your key.', true); return; }
+  msg('s-msg', 'Signing in...');
   try {
-    const r = await fetch(`${API}/api/login`, {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({ api_key: key }),
-    });
+    const r = await fetch(`${API}/api/login`, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({api_key: key}) });
     const d = await r.json();
-    if (!r.ok) { setMsg('si', d.error || 'Invalid key', true); return; }
+    if (!r.ok) { msg('s-msg', d.error || 'Invalid key', true); return; }
     setSession({ name: d.name, api_key: key });
     updateAuthBtn();
-    setMsg('si', `Signed in as ${d.name}.`);
-    setTimeout(closeModal, 900);
-  } catch (e) { setMsg('si', 'Network error', true); }
+    msg('s-msg', `Signed in as ${d.name}.`);
+    setTimeout(closeModal, 800);
+  } catch { msg('s-msg', 'Network error', true); }
 }
-
-function signOut() {
-  clearSession();
-  updateAuthBtn();
-}
-
 function copyKey() {
-  const key = document.getElementById('reg-key-val').textContent;
-  navigator.clipboard.writeText(key).then(() => {
-    const btn = document.querySelector('.key-copy');
-    btn.textContent = 'Copied!';
-    setTimeout(() => { btn.textContent = 'Copy'; }, 1500);
+  navigator.clipboard.writeText(document.getElementById('key-val').textContent).then(() => {
+    const b = document.querySelector('.key-copy');
+    b.textContent = 'Copied!';
+    setTimeout(() => b.textContent = 'Copy', 1500);
   });
 }
 
-function setMsg(pane, msg, isErr) {
-  const el = document.getElementById(`${pane}-msg`);
-  el.textContent = msg;
-  el.className = 'modal-msg' + (isErr ? ' error' : '');
-}
-
 // ── Leaderboard + chart ───────────────────────────────────────────────────
-async function loadLeaderboard() {
+async function init() {
   try {
     const r = await fetch(`${API}/api/leaderboard`);
     const d = await r.json();
@@ -905,113 +815,72 @@ async function loadLeaderboard() {
     renderLeaderboard(d);
     renderChart(d.history || []);
   } catch {
-    document.getElementById('leaderboard-content').innerHTML =
-      '<div class="lb-empty">Could not load leaderboard.</div>';
+    document.getElementById('leaderboard-content').innerHTML = '<div class="lb-empty">Could not load leaderboard.</div>';
   }
 }
 
 function renderFrontier(d) {
-  const best = d.best_score;
-  const total = d.total_submissions || 0;
-  const fill = document.getElementById('progress-fill');
-  const score = document.getElementById('frontier-score');
-  const detail = document.getElementById('frontier-detail');
-  if (best != null) {
-    fill.style.width = Math.min(best / 1.0 * 100, 100) + '%';
-    score.textContent = best.toFixed(4) + ' mean ipTM';
-    detail.textContent = total + ' submission' + (total !== 1 ? 's' : '');
-  } else {
-    score.textContent = '—';
-    detail.textContent = 'No submissions yet';
-  }
+  const best = d.best_score, total = d.total_submissions || 0;
+  document.getElementById('progress-fill').style.width = best ? Math.min(best * 100, 100) + '%' : '0%';
+  document.getElementById('frontier-score').textContent = best ? best.toFixed(4) + ' mean ipTM' : '—';
+  document.getElementById('frontier-detail').textContent = total ? `${total} submission${total !== 1 ? 's' : ''}` : 'No submissions yet';
 }
 
-function scoreClass(s) {
-  return s >= 0.7 ? 'score-green' : s >= 0.5 ? 'score-yellow' : 'score-gray';
-}
-
-function esc(s) {
-  return (s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-}
+function sc(s) { return s >= 0.7 ? 'sc-green' : s >= 0.5 ? 'sc-warn' : 'sc-dim'; }
+function esc(s) { return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
 function renderLeaderboard(d) {
-  const board = d.leaderboard || [];
-  const total = d.total_submissions || 0;
-  document.getElementById('lb-count').textContent = total ? `${total} total submission${total !== 1 ? 's' : ''}` : '';
-
-  const wrap = document.getElementById('leaderboard-content');
-  if (!board.length) {
-    wrap.innerHTML = '<div class="lb-empty">No entries yet. Be the first to submit!</div>';
-    return;
-  }
-  const rows = board.map(e => {
-    const sc = e.score.toFixed(4);
-    const cls = scoreClass(e.score);
-    const dt = new Date(e.submitted_at * 1000).toLocaleDateString();
-    const model = e.model ? `<span style="color:var(--text-muted);font-size:0.82rem">${esc(e.model)}</span>` : '';
-    return `<tr>
-      <td class="${e.rank === 1 ? 'rank-gold' : ''}" style="width:36px;font-family:var(--mono);font-size:0.82rem">${e.rank}</td>
-      <td style="font-weight:600">${esc(e.user)}</td>
-      <td class="score-val ${cls}">${sc}</td>
-      <td>${model}</td>
-      <td style="color:var(--text-dim);font-size:0.8rem">${dt}</td>
-    </tr>`;
-  }).join('');
-  wrap.innerHTML = `<table class="lb-table">
-    <thead><tr><th>#</th><th>Team</th><th>Mean ipTM</th><th>Method</th><th>Date</th></tr></thead>
-    <tbody>${rows}</tbody>
-  </table>
-  <p class="lb-note">One entry per team (best submission). Score = mean ipTM across all 8 targets.</p>`;
+  const board = d.leaderboard || [], total = d.total_submissions || 0;
+  document.getElementById('lb-count').textContent = total ? `${total} total` : '';
+  const el = document.getElementById('leaderboard-content');
+  if (!board.length) { el.innerHTML = '<div class="lb-empty">No entries yet — submit your first design!</div>'; return; }
+  const rows = board.map(e => `<tr>
+    <td class="${e.rank === 1 ? 'rank-gold' : 'rank-num'}">${e.rank}</td>
+    <td style="font-weight:600">${esc(e.user)}</td>
+    <td class="score-val ${sc(e.score)}">${e.score.toFixed(4)}</td>
+    <td style="color:var(--fg-muted);font-size:0.82rem">${esc(e.model||'')}</td>
+    <td style="color:var(--fg-dim);font-size:0.78rem">${new Date(e.submitted_at*1000).toLocaleDateString()}</td>
+  </tr>`).join('');
+  el.innerHTML = `<table class="lb-table"><thead><tr><th>#</th><th>Team</th><th>Mean ipTM</th><th>Method</th><th>Date</th></tr></thead><tbody>${rows}</tbody></table>
+    <p class="lb-note">Best submission per team. Score = mean ipTM across all 8 targets.</p>`;
 }
 
 function renderChart(history) {
+  if (!history.length) return;
   const noH = document.getElementById('no-history');
   const svg = document.getElementById('score-chart');
-  if (!history.length) return;
   noH.style.display = 'none';
   svg.style.display = 'block';
 
-  const W = svg.parentElement.clientWidth || 700;
-  const H = 120;
-  const P = { t: 12, r: 14, b: 24, l: 36 };
+  const W = svg.parentElement.clientWidth || 700, H = 110;
+  const P = {t:10, r:14, b:22, l:32};
   svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
   svg.setAttribute('width', W);
 
-  const pts = history.slice().sort((a, b) => a.submitted_at - b.submitted_at);
-  const minT = pts[0].submitted_at;
-  const maxT = pts[pts.length - 1].submitted_at || minT + 1;
-  const rT = maxT - minT || 1;
-
-  const x = t => P.l + ((t - minT) / rT) * (W - P.l - P.r);
-  const y = s => H - P.b - s * (H - P.t - P.b);
+  const pts = history.slice().sort((a,b) => a.submitted_at - b.submitted_at);
+  const minT = pts[0].submitted_at, maxT = pts[pts.length-1].submitted_at || minT+1, rT = maxT-minT||1;
+  const x = t => P.l + ((t-minT)/rT)*(W-P.l-P.r);
+  const y = s => H-P.b - s*(H-P.t-P.b);
 
   let out = '';
-  [0.3, 0.5, 0.7].forEach(v => {
-    const yp = y(v);
-    const col = v === 0.7 ? '#f0883e' : 'rgba(232,245,236,0.15)';
-    const dash = v === 0.7 ? '4,3' : '2,4';
-    out += `<line x1="${P.l}" y1="${yp}" x2="${W - P.r}" y2="${yp}" stroke="${col}" stroke-width="1" stroke-dasharray="${dash}"/>`;
-    out += `<text x="${P.l - 4}" y="${yp + 4}" font-family="JetBrains Mono,monospace" font-size="9" fill="${col}" opacity="0.8" text-anchor="end">${v.toFixed(1)}</text>`;
+  [0.3,0.5,0.7].forEach(v => {
+    const yp = y(v), col = v===0.7 ? '#f0883e' : '#c4bfb0', dash = v===0.7 ? '4,3' : '2,4';
+    out += `<line x1="${P.l}" y1="${yp}" x2="${W-P.r}" y2="${yp}" stroke="${col}" stroke-width="1" stroke-dasharray="${dash}" opacity="${v===0.7?0.7:0.5}"/>`;
+    out += `<text x="${P.l-4}" y="${yp+4}" font-family="Geist Mono,monospace" font-size="9" fill="${col}" opacity="0.8" text-anchor="end">${v.toFixed(1)}</text>`;
   });
-
   if (pts.length > 1) {
-    const d = pts.map((p, i) => `${i ? 'L' : 'M'}${x(p.submitted_at)},${y(p.score)}`).join(' ');
-    out += `<path d="${d}" fill="none" stroke="rgba(63,185,80,0.25)" stroke-width="1.5"/>`;
+    const d = pts.map((p,i) => `${i?'L':'M'}${x(p.submitted_at)},${y(p.score)}`).join(' ');
+    out += `<path d="${d}" fill="none" stroke="#2a7a50" stroke-opacity="0.3" stroke-width="1.5"/>`;
   }
-
   pts.forEach(p => {
-    const col = p.score >= 0.7 ? '#3fb950' : p.score >= 0.5 ? '#d29922' : 'rgba(232,245,236,0.4)';
-    const r = p.promoted ? 5 : 3.5;
-    out += `<circle cx="${x(p.submitted_at)}" cy="${y(p.score)}" r="${r}" fill="${col}" opacity="${p.promoted ? 1 : 0.7}">
-      <title>${p.score.toFixed(4)}</title></circle>`;
+    const col = p.score>=0.7 ? '#1d7a42' : p.score>=0.5 ? '#b45309' : '#9a9285';
+    out += `<circle cx="${x(p.submitted_at)}" cy="${y(p.score)}" r="${p.promoted?5:3.5}" fill="${col}" opacity="${p.promoted?1:0.75}"><title>${p.score.toFixed(4)}</title></circle>`;
   });
-
   svg.innerHTML = out;
 }
 
-// ── Init ──────────────────────────────────────────────────────────────────
 updateAuthBtn();
-loadLeaderboard();
+init();
 </script>
 </body>
 </html>
