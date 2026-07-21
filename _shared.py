@@ -19,16 +19,13 @@ from typing import Any
 # ---------------------------------------------------------------------------
 
 def _kv_url() -> str:
-    url = os.environ.get("KV_REST_API_URL", "")
-    if not url:
-        raise RuntimeError("KV_REST_API_URL not set")
-    return url.rstrip("/")
+    return os.environ.get("KV_REST_API_URL", "").rstrip("/")
 
 def _kv_token() -> str:
-    token = os.environ.get("KV_REST_API_TOKEN", "")
-    if not token:
-        raise RuntimeError("KV_REST_API_TOKEN not set")
-    return token
+    return os.environ.get("KV_REST_API_TOKEN", "")
+
+def _kv_available() -> bool:
+    return bool(_kv_url() and _kv_token())
 
 def _kv_req(method: str, path: str, body: Any = None) -> Any:
     url = f"{_kv_url()}{path}"
@@ -42,18 +39,26 @@ def _kv_req(method: str, path: str, body: Any = None) -> Any:
         return json.loads(resp.read())
 
 def kv_get(key: str) -> Any:
+    if not _kv_available():
+        return None
     result = _kv_req("GET", f"/get/{key}")
     return result.get("result")
 
 def kv_set(key: str, value: Any) -> None:
+    if not _kv_available():
+        return
     encoded = json.dumps(value)
     _kv_req("POST", "/set", [key, encoded])
 
 def kv_lpush(key: str, value: Any) -> None:
+    if not _kv_available():
+        return
     encoded = json.dumps(value)
     _kv_req("POST", "/lpush", [key, encoded])
 
 def kv_lrange(key: str, start: int = 0, stop: int = -1) -> list:
+    if not _kv_available():
+        return []
     result = _kv_req("POST", "/lrange", [key, start, stop])
     items = result.get("result") or []
     return [json.loads(i) for i in items]
