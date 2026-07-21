@@ -1,0 +1,46 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+.Python
+*.so
+*.dylib
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# Data / state
+data/
+verifier/pdb_cache/*.pdb
+verifier/pdb_cache/*.cif
+
+# Secrets
+.env
+.env.*
+*.key
+*.pem
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+
+# Node / frontend build artifacts
+node_modules/
+.next/
+.vercel/
+
+# Misc
+*.log
+*.tmp

@@ -1,0 +1,928 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>bind.fail — Protein Binder Design Benchmark</title>
+  <style>
+    /* -----------------------------------------------------------------------
+       Design tokens
+    ----------------------------------------------------------------------- */
+    :root {
+      --bg:          #0d1117;
+      --surface:     #161b22;
+      --surface2:    #21262d;
+      --border:      #30363d;
+      --accent:      #238636;
+      --accent-dim:  #1a6129;
+      --accent-glow: rgba(35, 134, 54, 0.18);
+      --text:        #e6edf3;
+      --text-muted:  #8b949e;
+      --text-dim:    #6e7681;
+      --tag-hard:    #da3633;
+      --tag-med:     #d29922;
+      --code-bg:     #0d1117;
+      --mono:        "JetBrains Mono", "Fira Code", ui-monospace, monospace;
+      --sans:        -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+      --radius:      8px;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--sans);
+      font-size: 15px;
+      line-height: 1.6;
+    }
+
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    /* -----------------------------------------------------------------------
+       Nav
+    ----------------------------------------------------------------------- */
+    nav {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(13, 17, 23, 0.92);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      padding: 0 24px;
+    }
+    .nav-inner {
+      max-width: 1100px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      height: 52px;
+      gap: 24px;
+    }
+    .nav-logo {
+      font-family: var(--mono);
+      font-size: 1.05rem;
+      color: var(--text);
+      font-weight: 700;
+      letter-spacing: -0.5px;
+    }
+    .nav-logo span { color: var(--accent); }
+    .nav-links {
+      display: flex;
+      gap: 20px;
+      margin-left: auto;
+    }
+    .nav-links a {
+      color: var(--text-muted);
+      font-size: 0.88rem;
+    }
+    .nav-links a:hover { color: var(--text); text-decoration: none; }
+
+    /* -----------------------------------------------------------------------
+       Layout
+    ----------------------------------------------------------------------- */
+    .page { max-width: 1100px; margin: 0 auto; padding: 0 24px 80px; }
+
+    section { margin-bottom: 48px; }
+
+    /* -----------------------------------------------------------------------
+       Hero
+    ----------------------------------------------------------------------- */
+    .hero {
+      padding: 72px 0 56px;
+      text-align: center;
+    }
+    .hero-kicker {
+      font-family: var(--mono);
+      font-size: 0.8rem;
+      letter-spacing: 0.12em;
+      color: var(--accent);
+      text-transform: uppercase;
+      margin-bottom: 16px;
+    }
+    .hero h1 {
+      font-size: clamp(1.8rem, 4vw, 3rem);
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      line-height: 1.15;
+      max-width: 680px;
+      margin: 0 auto 16px;
+    }
+    .hero-sub {
+      color: var(--text-muted);
+      font-size: 1.05rem;
+      max-width: 560px;
+      margin: 0 auto 40px;
+    }
+    .hero-badges {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-bottom: 40px;
+    }
+    .badge {
+      font-family: var(--mono);
+      font-size: 0.78rem;
+      padding: 4px 12px;
+      border-radius: 20px;
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      background: var(--surface);
+    }
+
+    /* -----------------------------------------------------------------------
+       Frontier progress bar
+    ----------------------------------------------------------------------- */
+    .frontier-wrap {
+      max-width: 600px;
+      margin: 0 auto 0;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px 24px;
+    }
+    .frontier-label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      margin-bottom: 10px;
+    }
+    .frontier-label strong { color: var(--text); }
+    .progress-track {
+      width: 100%;
+      height: 12px;
+      background: var(--surface2);
+      border-radius: 6px;
+      position: relative;
+      overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%;
+      border-radius: 6px;
+      background: linear-gradient(90deg, var(--accent-dim), var(--accent));
+      transition: width 1s ease;
+    }
+    .progress-threshold {
+      position: absolute;
+      top: -4px;
+      bottom: -4px;
+      width: 2px;
+      background: #f0883e;
+      left: 70%;
+    }
+    .progress-threshold-label {
+      font-family: var(--mono);
+      font-size: 0.72rem;
+      color: #f0883e;
+      position: absolute;
+      top: 16px;
+      left: 70%;
+      transform: translateX(-50%);
+    }
+    .frontier-meta {
+      margin-top: 8px;
+      font-size: 0.78rem;
+      color: var(--text-dim);
+      text-align: right;
+    }
+    .frontier-meta span { color: var(--text-muted); }
+
+    /* -----------------------------------------------------------------------
+       Cards
+    ----------------------------------------------------------------------- */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 28px 28px;
+    }
+    .card + .card { margin-top: 24px; }
+    .card h2 {
+      font-size: 1.15rem;
+      font-weight: 700;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .card h2 .icon {
+      font-size: 1rem;
+      opacity: 0.7;
+    }
+
+    /* -----------------------------------------------------------------------
+       Score chart
+    ----------------------------------------------------------------------- */
+    #chart-wrap {
+      width: 100%;
+      min-height: 160px;
+    }
+    #score-chart {
+      width: 100%;
+      height: 160px;
+      display: block;
+    }
+    #score-chart .axis-label {
+      font-family: var(--mono);
+      font-size: 10px;
+      fill: var(--text-dim);
+    }
+    #score-chart .dot { cursor: pointer; }
+    #score-chart .dot:hover { r: 6; }
+    #no-history {
+      text-align: center;
+      color: var(--text-dim);
+      font-size: 0.88rem;
+      padding: 40px 0;
+    }
+
+    /* -----------------------------------------------------------------------
+       Leaderboard
+    ----------------------------------------------------------------------- */
+    .leaderboard-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.88rem;
+    }
+    .leaderboard-table th {
+      text-align: left;
+      color: var(--text-muted);
+      font-weight: 500;
+      font-size: 0.78rem;
+      padding: 6px 12px;
+      border-bottom: 1px solid var(--border);
+    }
+    .leaderboard-table td {
+      padding: 10px 12px;
+      border-bottom: 1px solid rgba(48,54,61,0.4);
+      vertical-align: middle;
+    }
+    .leaderboard-table tr:last-child td { border-bottom: none; }
+    .rank-1 td:first-child { color: #f0c040; font-weight: 700; }
+    .score-cell { font-family: var(--mono); font-size: 0.9rem; font-weight: 700; }
+    .score-good { color: var(--accent); }
+    .score-ok { color: var(--tag-med); }
+    .score-low { color: var(--text-muted); }
+    .leaderboard-empty {
+      text-align: center;
+      color: var(--text-dim);
+      font-size: 0.9rem;
+      padding: 32px 0;
+    }
+
+    /* -----------------------------------------------------------------------
+       Targets table
+    ----------------------------------------------------------------------- */
+    .targets-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.88rem;
+    }
+    .targets-table th {
+      text-align: left;
+      color: var(--text-muted);
+      font-weight: 500;
+      font-size: 0.78rem;
+      padding: 6px 10px;
+      border-bottom: 1px solid var(--border);
+    }
+    .targets-table td {
+      padding: 10px 10px;
+      border-bottom: 1px solid rgba(48,54,61,0.4);
+      vertical-align: middle;
+    }
+    .targets-table tr:last-child td { border-bottom: none; }
+    .target-id {
+      font-family: var(--mono);
+      font-size: 0.8rem;
+      color: var(--accent);
+      white-space: nowrap;
+    }
+    .tag-hard {
+      font-size: 0.72rem;
+      padding: 2px 8px;
+      border-radius: 10px;
+      background: rgba(218,54,51,0.15);
+      color: var(--tag-hard);
+      border: 1px solid rgba(218,54,51,0.3);
+    }
+    .tag-med {
+      font-size: 0.72rem;
+      padding: 2px 8px;
+      border-radius: 10px;
+      background: rgba(210,153,34,0.12);
+      color: var(--tag-med);
+      border: 1px solid rgba(210,153,34,0.25);
+    }
+    .baseline-val {
+      font-family: var(--mono);
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+    .pdb-link {
+      font-family: var(--mono);
+      font-size: 0.78rem;
+    }
+
+    /* -----------------------------------------------------------------------
+       How it works
+    ----------------------------------------------------------------------- */
+    .steps {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 18px;
+    }
+    .step {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+    }
+    .step-num {
+      font-family: var(--mono);
+      font-size: 1.4rem;
+      font-weight: 800;
+      color: var(--accent);
+      margin-bottom: 8px;
+    }
+    .step h3 { font-size: 0.92rem; font-weight: 700; margin-bottom: 6px; }
+    .step p { font-size: 0.85rem; color: var(--text-muted); }
+
+    /* -----------------------------------------------------------------------
+       Terminal blocks
+    ----------------------------------------------------------------------- */
+    .terminal {
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px 18px;
+      font-family: var(--mono);
+      font-size: 0.82rem;
+      line-height: 1.7;
+      overflow-x: auto;
+    }
+    .terminal .prompt { color: var(--accent); user-select: none; }
+    .terminal .cmd { color: var(--text); }
+    .terminal .comment { color: var(--text-dim); }
+    .terminal .out { color: var(--text-muted); }
+
+    .participate-steps { display: flex; flex-direction: column; gap: 16px; }
+    .p-step { display: flex; gap: 14px; align-items: flex-start; }
+    .p-num {
+      flex-shrink: 0;
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      background: var(--accent-dim);
+      color: #fff;
+      font-size: 0.75rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-top: 2px;
+    }
+    .p-body { flex: 1; }
+    .p-body h4 { font-size: 0.9rem; font-weight: 700; margin-bottom: 6px; }
+    .p-body p { font-size: 0.84rem; color: var(--text-muted); margin-bottom: 8px; }
+
+    /* -----------------------------------------------------------------------
+       Baselines section
+    ----------------------------------------------------------------------- */
+    .baselines-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 14px;
+    }
+    .baseline-card {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px 18px;
+    }
+    .baseline-card .bl-target {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-bottom: 4px;
+    }
+    .baseline-card .bl-method {
+      font-family: var(--mono);
+      font-size: 0.78rem;
+      color: var(--text-dim);
+      margin-bottom: 8px;
+    }
+    .baseline-card .bl-score {
+      font-family: var(--mono);
+      font-size: 1.5rem;
+      font-weight: 800;
+      color: var(--tag-med);
+    }
+    .baseline-card .bl-label {
+      font-size: 0.72rem;
+      color: var(--text-dim);
+      margin-top: 2px;
+    }
+
+    /* -----------------------------------------------------------------------
+       Footer
+    ----------------------------------------------------------------------- */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 28px 24px;
+      text-align: center;
+      color: var(--text-dim);
+      font-size: 0.82rem;
+    }
+    footer a { color: var(--text-muted); }
+
+    /* -----------------------------------------------------------------------
+       Utilities
+    ----------------------------------------------------------------------- */
+    .mt-0 { margin-top: 0; }
+    .section-title {
+      font-size: 1.4rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      margin-bottom: 20px;
+    }
+    .muted { color: var(--text-muted); }
+    .small { font-size: 0.82rem; }
+    .mono { font-family: var(--mono); }
+  </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-inner">
+    <span class="nav-logo">bind<span>.</span>fail</span>
+    <div class="nav-links">
+      <a href="#how-it-works">How it works</a>
+      <a href="#targets">The targets</a>
+      <a href="#participate">Participate</a>
+      <a href="https://github.com/chainyoda/bindfail" target="_blank">GitHub</a>
+    </div>
+  </div>
+</nav>
+
+<!-- HERO -->
+<div class="page">
+  <section class="hero">
+    <div class="hero-kicker">Protein Binder Design Benchmark</div>
+    <h1>Can your AI design a protein drug?</h1>
+    <p class="hero-sub">
+      Submit designed binder sequences for 8 disease-relevant target proteins.
+      Scores are computed by AF2-Multimer ipTM. Threshold to pass: 0.70.
+    </p>
+    <div class="hero-badges">
+      <span class="badge">8 targets</span>
+      <span class="badge">AF2-Multimer scoring</span>
+      <span class="badge">ipTM threshold 0.70</span>
+      <span class="badge">FASTA submission</span>
+      <span class="badge">pip install bindfail</span>
+    </div>
+
+    <div class="frontier-wrap">
+      <div class="frontier-label">
+        <span>Frontier mean ipTM</span>
+        <strong id="frontier-score">—</strong>
+      </div>
+      <div class="progress-track">
+        <div class="progress-fill" id="progress-fill" style="width: 0%"></div>
+        <div class="progress-threshold"></div>
+      </div>
+      <div style="position: relative; height: 20px;">
+        <span class="progress-threshold-label">0.70 threshold</span>
+      </div>
+      <div class="frontier-meta">
+        <span id="frontier-meta-text">loading leaderboard...</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- SCORE HISTORY CHART -->
+  <section id="history-section">
+    <div class="card">
+      <h2><span class="icon">📈</span> Score history</h2>
+      <div id="chart-wrap">
+        <div id="no-history">No submissions yet. Be the first!</div>
+        <svg id="score-chart" style="display:none"></svg>
+      </div>
+    </div>
+  </section>
+
+  <!-- LEADERBOARD -->
+  <section id="leaderboard-section">
+    <div class="card">
+      <h2><span class="icon">🏆</span> Leaderboard</h2>
+      <div id="leaderboard-content">
+        <div class="leaderboard-empty">Loading...</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- TARGETS -->
+  <section id="targets">
+    <h2 class="section-title">The targets</h2>
+    <div class="card">
+      <table class="targets-table">
+        <thead>
+          <tr>
+            <th>Target ID</th>
+            <th>Name</th>
+            <th>PDB</th>
+            <th>Disease area</th>
+            <th>Difficulty</th>
+            <th>BindCraft baseline</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="target-id">spike_rbd</span></td>
+            <td>SARS-CoV-2 Spike RBD</td>
+            <td><a class="pdb-link" href="https://www.rcsb.org/structure/6M0J" target="_blank">6M0J</a></td>
+            <td>COVID-19</td>
+            <td><span class="tag-med">medium</span></td>
+            <td class="baseline-val">—</td>
+          </tr>
+          <tr>
+            <td><span class="target-id">pd1</span></td>
+            <td>PD-1</td>
+            <td><a class="pdb-link" href="https://www.rcsb.org/structure/4ZQK" target="_blank">4ZQK</a></td>
+            <td>Cancer immunotherapy</td>
+            <td><span class="tag-med">medium</span></td>
+            <td class="baseline-val">22%</td>
+          </tr>
+          <tr>
+            <td><span class="target-id">her2</span></td>
+            <td>HER2</td>
+            <td><a class="pdb-link" href="https://www.rcsb.org/structure/1N8Z" target="_blank">1N8Z</a></td>
+            <td>Breast cancer</td>
+            <td><span class="tag-med">medium</span></td>
+            <td class="baseline-val">—</td>
+          </tr>
+          <tr>
+            <td><span class="target-id">tnf_alpha</span></td>
+            <td>TNF-α</td>
+            <td><a class="pdb-link" href="https://www.rcsb.org/structure/1TNF" target="_blank">1TNF</a></td>
+            <td>Inflammatory disease</td>
+            <td><span class="tag-hard">hard</span></td>
+            <td class="baseline-val">29%</td>
+          </tr>
+          <tr>
+            <td><span class="target-id">pcsk9</span></td>
+            <td>PCSK9</td>
+            <td><a class="pdb-link" href="https://www.rcsb.org/structure/2P4E" target="_blank">2P4E</a></td>
+            <td>Cardiovascular / cholesterol</td>
+            <td><span class="tag-med">medium</span></td>
+            <td class="baseline-val">47%</td>
+          </tr>
+          <tr>
+            <td><span class="target-id">rsv_f</span></td>
+            <td>RSV F protein site II</td>
+            <td><a class="pdb-link" href="https://www.rcsb.org/structure/4MMV" target="_blank">4MMV</a></td>
+            <td>Respiratory syncytial virus</td>
+            <td><span class="tag-med">medium</span></td>
+            <td class="baseline-val">—</td>
+          </tr>
+          <tr>
+            <td><span class="target-id">flu_ha</span></td>
+            <td>Influenza H3 HA</td>
+            <td><a class="pdb-link" href="https://www.rcsb.org/structure/3LZG" target="_blank">3LZG</a></td>
+            <td>Influenza</td>
+            <td><span class="tag-med">medium</span></td>
+            <td class="baseline-val">—</td>
+          </tr>
+          <tr>
+            <td><span class="target-id">egfr</span></td>
+            <td>EGFR</td>
+            <td><a class="pdb-link" href="https://www.rcsb.org/structure/1IVO" target="_blank">1IVO</a></td>
+            <td>Lung / colorectal cancer</td>
+            <td><span class="tag-med">medium</span></td>
+            <td class="baseline-val">—</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="small muted" style="margin-top:12px;">
+      BindCraft baselines from <a href="https://www.biorxiv.org/content/10.1101/2024.09.30.615802" target="_blank">Pacesa et al. 2024</a>.
+      IL-6 baseline (38%) not included in current target set.
+    </p>
+  </section>
+
+  <!-- HOW IT WORKS -->
+  <section id="how-it-works">
+    <h2 class="section-title">How it works</h2>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">01</div>
+        <h3>Design binders</h3>
+        <p>Use RFdiffusion, BindCraft, ESMFold, or any method to design protein sequences that bind each of the 8 targets.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">02</div>
+        <h3>Format as FASTA</h3>
+        <p>Put one sequence per target in a FASTA file, with the target ID as the header. Length: 50–200 residues.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">03</div>
+        <h3>Submit via CLI</h3>
+        <p>Run <code class="mono">bindfail submit sequences.fasta</code>. The server verifies each sequence with AF2-Multimer.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">04</div>
+        <h3>Score &amp; rank</h3>
+        <p>Score = mean ipTM across all 8 targets. Threshold 0.70 marks a "successful" binder. Beat the leaderboard.</p>
+      </div>
+    </div>
+
+    <div style="margin-top: 20px;">
+      <div class="card">
+        <h2>Example FASTA submission</h2>
+        <div class="terminal">
+          <div><span class="comment"># sequences.fasta — one sequence per target</span></div>
+          <div><span class="cmd">&gt;spike_rbd</span></div>
+          <div><span class="cmd">MKTAYIAKQRQISFVKSHFSRQLEERLGLIEVQAPLAPGMIREDYLDAEYEVK</span></div>
+          <div><span class="cmd">&gt;pd1</span></div>
+          <div><span class="cmd">ACDEFGHIKLMNPQRSTVWYACDEFGHIKLMNPQRSTVWYACDEFGHIKLMN</span></div>
+          <div><span class="cmd">&gt;her2</span></div>
+          <div><span class="cmd">WQKLISEEDL...</span></div>
+          <div><span class="comment"># ...one entry per target ID</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PUBLISHED BASELINES -->
+  <section id="baselines">
+    <h2 class="section-title">Published baselines (BindCraft)</h2>
+    <div class="baselines-grid">
+      <div class="baseline-card">
+        <div class="bl-target">PCSK9</div>
+        <div class="bl-method">BindCraft (Pacesa 2024)</div>
+        <div class="bl-score">47%</div>
+        <div class="bl-label">success rate ipTM &gt; 0.70</div>
+      </div>
+      <div class="baseline-card">
+        <div class="bl-target">IL-6 (not in set)</div>
+        <div class="bl-method">BindCraft (Pacesa 2024)</div>
+        <div class="bl-score">38%</div>
+        <div class="bl-label">success rate ipTM &gt; 0.70</div>
+      </div>
+      <div class="baseline-card">
+        <div class="bl-target">TNF-α</div>
+        <div class="bl-method">BindCraft (Pacesa 2024)</div>
+        <div class="bl-score">29%</div>
+        <div class="bl-label">success rate ipTM &gt; 0.70</div>
+      </div>
+      <div class="baseline-card">
+        <div class="bl-target">PD-1</div>
+        <div class="bl-method">BindCraft (Pacesa 2024)</div>
+        <div class="bl-score">22%</div>
+        <div class="bl-label">success rate ipTM &gt; 0.70</div>
+      </div>
+    </div>
+    <p class="small muted" style="margin-top:12px;">
+      These rates represent the fraction of BindCraft designs that exceed ipTM 0.70 in AF2-Multimer.
+      The mean ipTM leaderboard score is the primary ranking metric.
+    </p>
+  </section>
+
+  <!-- PARTICIPATE -->
+  <section id="participate">
+    <h2 class="section-title">Participate</h2>
+    <div class="card">
+      <div class="participate-steps">
+
+        <div class="p-step">
+          <div class="p-num">1</div>
+          <div class="p-body">
+            <h4>Install the CLI</h4>
+            <div class="terminal">
+              <div><span class="prompt">$ </span><span class="cmd">pip install bindfail</span></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="p-step">
+          <div class="p-num">2</div>
+          <div class="p-body">
+            <h4>Register and log in</h4>
+            <div class="terminal">
+              <div><span class="prompt">$ </span><span class="cmd">bindfail login</span></div>
+              <div><span class="out">Server: https://bindfail.up.railway.app</span></div>
+              <div><span class="out">Register a new account or log in? [register/login]: register</span></div>
+              <div><span class="out">Your name / team name: my-team</span></div>
+              <div><span class="out">Registered as: my-team</span></div>
+              <div><span class="out">API key: bf_a1b2c3...</span></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="p-step">
+          <div class="p-num">3</div>
+          <div class="p-body">
+            <h4>Check the targets</h4>
+            <div class="terminal">
+              <div><span class="prompt">$ </span><span class="cmd">bindfail targets</span></div>
+              <div><span class="out">ID             Name                         PDB    Difficulty   Description</span></div>
+              <div><span class="out">spike_rbd      SARS-CoV-2 Spike RBD         6M0J   medium       COVID-19 receptor binding domain</span></div>
+              <div><span class="out">pd1            PD-1                         4ZQK   medium       Cancer immune checkpoint</span></div>
+              <div><span class="out">...</span></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="p-step">
+          <div class="p-num">4</div>
+          <div class="p-body">
+            <h4>Design binders and submit</h4>
+            <div class="terminal">
+              <div><span class="comment"># Create sequences.fasta with one sequence per target ID</span></div>
+              <div><span class="prompt">$ </span><span class="cmd">bindfail submit sequences.fasta --note "RFdiffusion baseline" --model "RFdiffusion 1.1"</span></div>
+              <div><span class="out">Submitting sequences.fasta...</span></div>
+              <div><span class="out"></span></div>
+              <div><span class="out">Score: 0.4821  (not promoted — did not beat current best)</span></div>
+              <div><span class="out">Submission ID: a4f8c2e1</span></div>
+              <div><span class="out"></span></div>
+              <div><span class="out">Per-target results:</span></div>
+              <div><span class="out">  Target         ipTM    Success</span></div>
+              <div><span class="out">  spike_rbd      0.5312       no</span></div>
+              <div><span class="out">  pd1            0.7201      YES</span></div>
+              <div><span class="out">  ...</span></div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+</div><!-- /.page -->
+
+<footer>
+  <p>
+    bind.fail &mdash;
+    <a href="https://github.com/chainyoda/bindfail">GitHub</a> &middot;
+    Scoring by AF2-Multimer &middot;
+    Inspired by <a href="https://ecdsa.fail">ecdsa.fail</a>
+  </p>
+</footer>
+
+<script>
+  // -------------------------------------------------------------------------
+  // Load leaderboard + history from API
+  // -------------------------------------------------------------------------
+  const API = 'https://bindfail.up.railway.app';
+
+  async function fetchLeaderboard() {
+    try {
+      const resp = await fetch(`${API}/leaderboard`);
+      if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+      return await resp.json();
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function scoreClass(s) {
+    if (s >= 0.7) return 'score-good';
+    if (s >= 0.5) return 'score-ok';
+    return 'score-low';
+  }
+
+  function renderLeaderboard(data) {
+    const board = data.leaderboard || [];
+    const total = data.total_submissions || 0;
+    const best = data.best_score;
+
+    // Update frontier
+    if (best != null) {
+      const pct = Math.min(best / 1.0 * 100, 100);
+      document.getElementById('progress-fill').style.width = pct + '%';
+      document.getElementById('frontier-score').textContent = best.toFixed(4);
+      document.getElementById('frontier-meta-text').innerHTML =
+        `Best mean ipTM across <span>${total}</span> submission${total !== 1 ? 's' : ''}`;
+    } else {
+      document.getElementById('frontier-score').textContent = '—';
+      document.getElementById('frontier-meta-text').textContent = 'No submissions yet';
+    }
+
+    // Leaderboard table
+    const wrap = document.getElementById('leaderboard-content');
+    if (!board.length) {
+      wrap.innerHTML = '<div class="leaderboard-empty">No entries yet. Submit your first design!</div>';
+      return;
+    }
+
+    const rows = board.map((e, i) => {
+      const sc = e.score.toFixed(4);
+      const cls = scoreClass(e.score);
+      const rank = e.rank;
+      const dt = new Date(e.submitted_at * 1000).toLocaleDateString();
+      const model = e.model ? `<span class="small muted">${escHtml(e.model)}</span>` : '';
+      const note = e.note ? `<span class="small muted"> — ${escHtml(e.note)}</span>` : '';
+      return `<tr class="${rank === 1 ? 'rank-1' : ''}">
+        <td>${rank}</td>
+        <td>${escHtml(e.user)}</td>
+        <td class="score-cell ${cls}">${sc}</td>
+        <td>${model}</td>
+        <td>${note}${dt}</td>
+      </tr>`;
+    }).join('');
+
+    wrap.innerHTML = `
+      <table class="leaderboard-table">
+        <thead>
+          <tr><th>#</th><th>User / Team</th><th>Mean ipTM</th><th>Model</th><th>Note / Date</th></tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>
+      <p class="small muted" style="margin-top:10px;">
+        Only the best scoring submission per team appears on the leaderboard.
+        Total submissions: ${total}.
+      </p>`;
+  }
+
+  function renderChart(history) {
+    if (!history || !history.length) return;
+
+    const svg = document.getElementById('score-chart');
+    const noH = document.getElementById('no-history');
+    noH.style.display = 'none';
+    svg.style.display = 'block';
+
+    const W = svg.parentElement.clientWidth || 800;
+    const H = 160;
+    const PAD = { top: 14, right: 20, bottom: 28, left: 44 };
+
+    svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+    svg.setAttribute('width', W);
+    svg.setAttribute('height', H);
+
+    // Sort by time
+    const pts = history.slice().sort((a, b) => a.submitted_at - b.submitted_at);
+    const minT = pts[0].submitted_at;
+    const maxT = pts[pts.length - 1].submitted_at || minT + 1;
+    const rangeT = maxT - minT || 1;
+
+    const xScale = t => PAD.left + ((t - minT) / rangeT) * (W - PAD.left - PAD.right);
+    const yScale = s => H - PAD.bottom - s * (H - PAD.top - PAD.bottom);
+
+    let svgContent = '';
+
+    // Grid lines at 0.3, 0.5, 0.7
+    [0.3, 0.5, 0.7].forEach(y => {
+      const yp = yScale(y);
+      const col = y === 0.7 ? '#f0883e' : '#30363d';
+      const op = y === 0.7 ? '0.5' : '0.3';
+      svgContent += `<line x1="${PAD.left}" y1="${yp}" x2="${W - PAD.right}" y2="${yp}"
+        stroke="${col}" stroke-opacity="${op}" stroke-width="1" stroke-dasharray="${y === 0.7 ? '4,3' : '2,3'}"/>`;
+      svgContent += `<text x="${PAD.left - 4}" y="${yp + 4}" class="axis-label" text-anchor="end" fill="${col}" fill-opacity="${y === 0.7 ? '0.9' : '0.6'}">${y.toFixed(1)}</text>`;
+    });
+
+    // Line connecting points
+    if (pts.length > 1) {
+      const d = pts.map((p, i) => `${i === 0 ? 'M' : 'L'}${xScale(p.submitted_at)},${yScale(p.score)}`).join(' ');
+      svgContent += `<path d="${d}" fill="none" stroke="#238636" stroke-opacity="0.3" stroke-width="1.5"/>`;
+    }
+
+    // Dots
+    pts.forEach(p => {
+      const x = xScale(p.submitted_at);
+      const y = yScale(p.score);
+      const col = p.score >= 0.7 ? '#3fb950' : p.score >= 0.5 ? '#d29922' : '#8b949e';
+      svgContent += `<circle cx="${x}" cy="${y}" r="${p.promoted ? 5 : 3.5}"
+        fill="${col}" fill-opacity="${p.promoted ? '1' : '0.65'}" class="dot">
+        <title>${p.user}: ${p.score.toFixed(4)}</title>
+      </circle>`;
+    });
+
+    svg.innerHTML = svgContent;
+  }
+
+  function escHtml(s) {
+    return (s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  async function init() {
+    const data = await fetchLeaderboard();
+    if (data) {
+      renderLeaderboard(data);
+      renderChart(data.history || []);
+    } else {
+      document.getElementById('leaderboard-content').innerHTML =
+        '<div class="leaderboard-empty">Could not reach server.</div>';
+      document.getElementById('frontier-meta-text').textContent = 'Server offline';
+    }
+  }
+
+  init();
+</script>
+</body>
+</html>
