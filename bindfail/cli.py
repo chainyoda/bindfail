@@ -25,7 +25,7 @@ import requests
 CONFIG_DIR = Path(os.environ.get("BINDFAIL_CONFIG_DIR", Path.home() / ".config" / "bindfail"))
 CONFIG_FILE = CONFIG_DIR / "config.json"
 
-DEFAULT_HOST = os.environ.get("BINDFAIL_HOST", "https://bindfail.up.railway.app")
+DEFAULT_HOST = os.environ.get("BINDFAIL_HOST", "https://bindfail.vercel.app")
 
 
 def load_config() -> dict:

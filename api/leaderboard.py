@@ -1,46 +1,44 @@
-"""
-Vercel serverless function: GET /api/leaderboard
-
-Proxies to the Railway judge server. Falls back to empty data if unreachable.
-"""
-
-import json
-import urllib.request
-import urllib.error
+"""Vercel serverless: GET /api/leaderboard"""
 from http.server import BaseHTTPRequestHandler
-
-JUDGE_URL = "https://bindfail.up.railway.app"
-
-EMPTY_RESPONSE = {
-    "leaderboard": [],
-    "history": [],
-    "best_score": None,
-    "total_submissions": 0,
-}
+from _shared import respond, get_submissions, get_best
 
 
 class handler(BaseHTTPRequestHandler):
     def do_GET(self):
-        data = self._fetch_leaderboard()
-        body = json.dumps(data).encode()
-        self.send_response(200)
-        self.send_header("Content-Type", "application/json")
-        self.send_header("Content-Length", str(len(body)))
-        self.send_header("Access-Control-Allow-Origin", "*")
-        self.send_header("Cache-Control", "public, max-age=30")
-        self.end_headers()
-        self.wfile.write(body)
+        all_subs = get_submissions()
+        best_obj = get_best()
+        best_score = best_obj["score"] if best_obj else None
 
-    def _fetch_leaderboard(self) -> dict:
-        try:
-            req = urllib.request.Request(
-                f"{JUDGE_URL}/leaderboard",
-                headers={"Accept": "application/json"},
-            )
-            with urllib.request.urlopen(req, timeout=8) as resp:
-                return json.loads(resp.read())
-        except Exception:
-            return EMPTY_RESPONSE
+        # Best entry per user
+        by_user: dict = {}
+        for s in all_subs:
+            u = s.get("user", "?")
+            if u not in by_user or s["score"] > by_user[u]["score"]:
+                by_user[u] = s
+
+        board = sorted(by_user.values(), key=lambda s: s["score"], reverse=True)
+        for i, entry in enumerate(board):
+            entry["rank"] = i + 1
+
+        # History: score + time for chart (no PII beyond score)
+        history = sorted(
+            [{"score": s["score"], "submitted_at": s["submitted_at"], "promoted": s.get("promoted", False)}
+             for s in all_subs],
+            key=lambda s: s["submitted_at"],
+        )
+
+        respond(self, 200, {
+            "leaderboard": board,
+            "history": history,
+            "best_score": best_score,
+            "total_submissions": len(all_subs),
+        }, cache="public, max-age=15")
+
+    def do_OPTIONS(self):
+        self.send_response(200)
+        self.send_header("Access-Control-Allow-Origin", "*")
+        self.send_header("Access-Control-Allow-Headers", "Authorization, Content-Type")
+        self.end_headers()
 
     def log_message(self, *args):
         pass

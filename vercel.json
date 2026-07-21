@@ -5,9 +5,13 @@
     {"src": "public/**", "use": "@vercel/static"}
   ],
   "routes": [
-    {"src": "/api/health",      "dest": "/api/health.py"},
-    {"src": "/api/leaderboard", "dest": "/api/leaderboard.py"},
-    {"src": "/api/targets",     "dest": "/api/targets.py"},
-    {"src": "/(.*)",            "dest": "/public/$1"}
+    {"src": "/api/health",       "dest": "/api/health.py"},
+    {"src": "/api/register",     "dest": "/api/register.py"},
+    {"src": "/api/login",        "dest": "/api/login.py"},
+    {"src": "/api/submit",       "dest": "/api/submit.py"},
+    {"src": "/api/submissions",  "dest": "/api/submissions.py"},
+    {"src": "/api/leaderboard",  "dest": "/api/leaderboard.py"},
+    {"src": "/api/targets",      "dest": "/api/targets.py"},
+    {"src": "/(.*)",             "dest": "/public/$1"}
   ]
 }
